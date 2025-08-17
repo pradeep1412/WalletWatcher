@@ -28,7 +28,7 @@ export function BudgetGoals() {
       .filter(c => c.name.toLowerCase() !== 'income')
       .map((category) => {
         const budget = budgets.find((b) => b.categoryId === category.id);
-        const spent = filteredTransactions
+        const spent = (filteredTransactions || [])
           .filter((t) => t.categoryId === category.id && t.type === "expense")
           .reduce((acc, t) => acc + t.amount, 0);
         const budgetAmount = budget?.amount || 0;
