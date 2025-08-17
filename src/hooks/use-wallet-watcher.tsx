@@ -19,6 +19,7 @@ import {
 } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { startOfWeek, startOfMonth, startOfYear, isWithinInterval, endOfWeek, endOfMonth, endOfYear } from 'date-fns';
+import { runDailyTasks } from "@/lib/scheduler";
 
 
 type WalletWatcherContextType = AppState & {
@@ -44,11 +45,14 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     loading: true,
     error: null,
   });
-  const [period, setPeriod] = useState<Period>('month');
+  const [period, setPeriod] = useState<Period>('week');
 
   const loadData = useCallback(async () => {
     setState((s) => ({ ...s, loading: true }));
     try {
+      // Run scheduler first
+      await runDailyTasks();
+
       const user = await db.getUser();
       if (!user) {
         router.replace("/");

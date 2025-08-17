@@ -124,6 +124,36 @@ class DatabaseService {
       request.onerror = () => reject(request.error);
     });
   }
+  
+  async deleteTransactionsOlderThan(days: number): Promise<number> {
+    const store = await this.getStore(TRANSACTIONS_STORE, "readwrite");
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() - days);
+
+    let deletedCount = 0;
+
+    return new Promise((resolve, reject) => {
+        const cursorRequest = store.openCursor();
+
+        cursorRequest.onsuccess = (event) => {
+            const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+            if (cursor) {
+                const transaction = cursor.value as Transaction;
+                if (new Date(transaction.date) < thresholdDate) {
+                    cursor.delete();
+                    deletedCount++;
+                }
+                cursor.continue();
+            } else {
+                resolve(deletedCount);
+            }
+        };
+
+        cursorRequest.onerror = (event) => {
+            reject((event.target as IDBRequest).error);
+        };
+    });
+  }
 
   // Category methods
   async addCategory(category: Omit<Category, "id">): Promise<IDBValidKey> {
