@@ -3,8 +3,7 @@
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
-import { BudgetGoals } from "@/components/dashboard/budget-goals";
-import { SavingsGoals } from "@/components/dashboard/savings-goals";
+import { Goals } from "@/components/dashboard/goals";
 import { TransactionsList } from "@/components/dashboard/recent-transactions";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
 import { ImportSheet } from "@/components/dashboard/import-sheet";
@@ -49,9 +48,8 @@ export default function DashboardPage() {
         <div className="lg:col-span-3">
           <SpendingChart />
         </div>
-        <div className="lg:col-span-2 space-y-6">
-          <BudgetGoals />
-          <SavingsGoals />
+        <div className="lg:col-span-2">
+          <Goals />
         </div>
       </div>
       

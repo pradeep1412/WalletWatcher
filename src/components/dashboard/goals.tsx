@@ -9,15 +9,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus, Trophy, CheckCircle } from "lucide-react";
+import { Pencil, Plus, Trophy, CheckCircle, PiggyBank, Target } from "lucide-react";
 import { SetBudgetSheet } from "./set-budget-sheet";
 import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AddSavingsGoalSheet } from "./add-savings-goal-sheet";
+import { AddFundsSheet } from "./add-funds-sheet";
+import { type SavingsGoal } from "@/lib/types";
 
 function BudgetGoalSkeleton() {
     return (
@@ -31,8 +35,7 @@ function BudgetGoalSkeleton() {
     )
 }
 
-
-export function BudgetGoals() {
+function SpendingGoalsTab() {
   const { filteredTransactions, categories, budgets, markGoalAsComplete, period, loading } = useWalletWatcher();
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -102,43 +105,26 @@ export function BudgetGoals() {
   
   if (loading && budgets.length === 0) {
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                  <Skeleton className="h-6 w-32" />
-                  <Skeleton className="mt-1 h-4 w-48" />
-              </div>
-              <Skeleton className="h-9 w-24" />
-            </CardHeader>
-            <CardContent>
-                <ScrollArea className="h-[150px]">
-                  <div className="space-y-4">
-                      <BudgetGoalSkeleton />
-                      <BudgetGoalSkeleton />
-                  </div>
-                </ScrollArea>
-            </CardContent>
-        </Card>
+        <div className="space-y-4 pt-4">
+            <BudgetGoalSkeleton />
+            <BudgetGoalSkeleton />
+        </div>
     )
   }
 
   return (
-    <Card>
+    <>
       {celebratingGoal !== null && <Confetti />}
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Spending Goals</CardTitle>
-          <CardDescription>
+      <div className="flex items-center justify-between pb-4">
+        <CardDescription>
             Your spending caps for the selected period.
-          </CardDescription>
-        </div>
+        </CardDescription>
         <Button variant="outline" size="sm" onClick={() => handleSetBudget()}>
-          <Plus className="mr-2 h-4 w-4" />
-          Set Goal
+            <Plus className="mr-2 h-4 w-4" />
+            Set Goal
         </Button>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[150px]">
+      </div>
+        <ScrollArea className="h-[200px]">
           <div className="space-y-4">
             {budgetData.length > 0 ? (
               budgetData.map((item) => item && (
@@ -177,19 +163,140 @@ export function BudgetGoals() {
                 </div>
               ))
             ) : (
-                <div className="flex h-[100px] flex-col items-center justify-center text-center">
+                <div className="flex h-[150px] flex-col items-center justify-center text-center">
                     <p className="font-semibold">No Spending Goals for this Period</p>
                     <p className="text-sm text-muted-foreground">Try setting a goal or changing the period filter.</p>
                 </div>
             )}
           </div>
         </ScrollArea>
-      </CardContent>
       <SetBudgetSheet 
         isOpen={isSheetOpen}
         setIsOpen={setIsSheetOpen}
         categoryId={selectedCategory}
       />
-    </Card>
+    </>
   );
+}
+
+function SavingsGoalSkeleton() {
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-5 w-32" />
+            </div>
+            <Skeleton className="h-4 w-full" />
+        </div>
+    )
+}
+
+function SavingsGoalsTab() {
+  const { savingsGoals, loading } = useWalletWatcher();
+  const [isAddGoalSheetOpen, setIsAddGoalSheetOpen] = useState(false);
+  const [isAddFundsSheetOpen, setIsAddFundsSheetOpen] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | undefined>(undefined);
+
+  const handleAddFunds = (goal: SavingsGoal) => {
+    setSelectedGoal(goal);
+    setIsAddFundsSheetOpen(true);
+  }
+  
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
+  
+  if (loading && savingsGoals.length === 0) {
+    return (
+        <div className="space-y-4 pt-4">
+            <SavingsGoalSkeleton />
+            <SavingsGoalSkeleton />
+        </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between pb-4">
+         <CardDescription>
+            Track your progress towards your financial targets.
+          </CardDescription>
+        <Button variant="outline" size="sm" onClick={() => setIsAddGoalSheetOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Goal
+        </Button>
+      </div>
+        <ScrollArea className="h-[200px]">
+          <div className="space-y-4">
+            {savingsGoals.length > 0 ? (
+              savingsGoals.map((goal) => {
+                const progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
+                return (
+                    <div key={goal.id}>
+                        <div className="mb-1 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{goal.name}</span>
+                                {progress >= 100 && <Target className="h-4 w-4 text-green-500" />}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground">
+                                    {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
+                                </span>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddFunds(goal)}>
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                        <Progress value={progress} />
+                    </div>
+                )
+              })
+            ) : (
+                <div className="flex h-[150px] flex-col items-center justify-center text-center">
+                    <PiggyBank className="h-8 w-8 text-muted-foreground" />
+                    <p className="mt-2 font-semibold">No Savings Goals Yet</p>
+                    <p className="text-sm text-muted-foreground">Click "New Goal" to start saving.</p>
+                </div>
+            )}
+          </div>
+        </ScrollArea>
+      <AddSavingsGoalSheet 
+        isOpen={isAddGoalSheetOpen}
+        setIsOpen={setIsAddGoalSheetOpen}
+      />
+      <AddFundsSheet 
+        isOpen={isAddFundsSheetOpen}
+        setIsOpen={setIsAddFundsSheetOpen}
+        goal={selectedGoal}
+      />
+    </>
+  );
+}
+
+
+export function Goals() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Goals</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Tabs defaultValue="spending">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="spending">Spending</TabsTrigger>
+                        <TabsTrigger value="savings">Savings</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="spending">
+                        <SpendingGoalsTab />
+                    </TabsContent>
+                    <TabsContent value="savings">
+                        <SavingsGoalsTab />
+                    </TabsContent>
+                </Tabs>
+            </CardContent>
+        </Card>
+    )
 }
