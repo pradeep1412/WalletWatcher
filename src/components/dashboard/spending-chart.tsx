@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -9,29 +10,39 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher.tsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
+
+type Period = "daily" | "monthly" | "yearly";
 
 export function SpendingChart() {
-  const { transactions, categories, user } = useWalletWatcher();
+  const { transactions, user } = useWalletWatcher();
+  const [period, setPeriod] = useState<Period>("monthly");
 
   const chartData = useMemo(() => {
     const expenseData: { [key: string]: number } = {};
-    transactions
-      .filter((t) => t.type === "expense")
-      .forEach((t) => {
-        const categoryName =
-          categories.find((c) => c.id === t.categoryId)?.name ||
-          "Uncategorized";
-        expenseData[categoryName] =
-          (expenseData[categoryName] || 0) + Math.abs(t.amount);
-      });
+    const expenseTransactions = transactions.filter((t) => t.type === "expense");
 
-    return Object.entries(expenseData).map(([name, value]) => ({
-      name,
-      value,
-    }));
-  }, [transactions, categories]);
+    expenseTransactions.forEach((t) => {
+      const date = new Date(t.date);
+      let key = "";
+      if (period === "daily") {
+        key = format(date, "yyyy-MM-dd");
+      } else if (period === "monthly") {
+        key = format(date, "yyyy-MM");
+      } else {
+        key = format(date, "yyyy");
+      }
+      expenseData[key] = (expenseData[key] || 0) + Math.abs(t.amount);
+    });
+
+    return Object.entries(expenseData)
+      .map(([date, value]) => ({ date, value }))
+      .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  }, [transactions, period]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(user?.country ? `en-${user.country}` : 'en-US', {
@@ -39,33 +50,30 @@ export function SpendingChart() {
       currency: "USD",
     }).format(amount);
   };
-  
-  const COLORS = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
-    '#8884d8',
-    '#82ca9d',
-  ];
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      let formattedLabel = label;
+      if (period === "monthly") {
+        formattedLabel = format(new Date(label), "MMMM yyyy");
+      } else if (period === "daily") {
+        formattedLabel = format(new Date(label), "PPP");
+      }
+
       return (
         <div className="rounded-lg border bg-background p-2 shadow-sm">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className="flex flex-col">
               <span className="text-[0.70rem] uppercase text-muted-foreground">
-                Category
+                {period.charAt(0).toUpperCase() + period.slice(1)}
               </span>
               <span className="font-bold text-foreground">
-                {payload[0].name}
+                {formattedLabel}
               </span>
             </div>
             <div className="flex flex-col">
               <span className="text-[0.70rem] uppercase text-muted-foreground">
-                Amount
+                Total Spent
               </span>
               <span className="font-bold">
                 {formatCurrency(payload[0].value)}
@@ -77,42 +85,47 @@ export function SpendingChart() {
     }
     return null;
   };
+  
+  const XAxisTickFormatter = (value: string) => {
+      if (period === 'monthly') return format(new Date(value), 'MMM');
+      if (period === 'daily') return format(new Date(value), 'd');
+      return value;
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Spending by Category</CardTitle>
-        <CardDescription>
-          A look at where your money is going.
-        </CardDescription>
+        <div className="flex items-start justify-between">
+            <div>
+                <CardTitle>Spending Over Time</CardTitle>
+                <CardDescription>
+                A look at your spending trends.
+                </CardDescription>
+            </div>
+            <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
+                <TabsList>
+                    <TabsTrigger value="daily">Day</TabsTrigger>
+                    <TabsTrigger value="monthly">Month</TabsTrigger>
+                    <TabsTrigger value="yearly">Year</TabsTrigger>
+                </TabsList>
+            </Tabs>
+        </div>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={{}} className="mx-auto aspect-square h-[250px]">
+        <ChartContainer config={{}} className="mx-auto aspect-video h-[250px]">
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <BarChart data={chartData}>
+                <XAxis dataKey="date" tickFormatter={XAxisTickFormatter} />
+                <YAxis tickFormatter={(value) => formatCurrency(value)} />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  nameKey="name"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-              </PieChart>
+                <Bar dataKey="value" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <div className="flex h-full items-center justify-center">
               <p className="text-muted-foreground">
-                No expense data to display.
+                No expense data to display for this period.
               </p>
             </div>
           )}
@@ -121,3 +134,4 @@ export function SpendingChart() {
     </Card>
   );
 }
+
