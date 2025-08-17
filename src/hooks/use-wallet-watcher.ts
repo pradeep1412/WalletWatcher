@@ -123,10 +123,10 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const providerValue = { ...state, addTransaction, setBudget, logout };
+
   return (
-    <AppContext.Provider
-      value={{ ...state, addTransaction, setBudget, logout }}
-    >
+    <AppContext.Provider value={providerValue}>
       {children}
     </AppContext.Provider>
   );
