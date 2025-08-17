@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 function TransactionRowSkeleton() {
   return (
@@ -102,9 +103,10 @@ export function TransactionsList({ limit }: { limit?: number }) {
                     {format(new Date(tx.date), "PPP")}
                   </TableCell>
                   <TableCell
-                    className={`text-right font-medium ${
-                      tx.type === "income" ? "text-green-500" : ""
-                    }`}
+                    className={cn("text-right font-medium", {
+                      "text-green-500": tx.type === "income",
+                      "text-red-500": tx.type === "expense",
+                    })}
                   >
                     {tx.type === "income" ? "+" : "-"}
                     {formatCurrency(Math.abs(tx.amount))}
