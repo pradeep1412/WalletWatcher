@@ -5,21 +5,32 @@ import { useTheme } from "next-themes"
 import { Moon, Sun } from "lucide-react"
 
 import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const [isDarkMode, setIsDarkMode] = React.useState(theme === "dark")
+  const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
-    setIsDarkMode(theme === "dark")
-  }, [theme])
-
+    setMounted(true)
+  }, [])
+  
   const handleThemeChange = (checked: boolean) => {
-    const newTheme = checked ? "dark" : "light"
-    setTheme(newTheme)
-    setIsDarkMode(checked)
+    setTheme(checked ? "dark" : "light")
   }
+
+  if (!mounted) {
+    // Render a placeholder or nothing on the server
+    // to avoid hydration mismatch.
+    return (
+        <div className="flex items-center space-x-2">
+            <Sun className="h-5 w-5" />
+            <div className="h-6 w-11 rounded-full bg-input"></div>
+            <Moon className="h-5 w-5" />
+        </div>
+    )
+  }
+
+  const isDarkMode = theme === "dark"
 
   return (
     <div className="flex items-center space-x-2">
