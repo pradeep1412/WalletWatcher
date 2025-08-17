@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { QRCode } from "qrcode.react";
+import QRCode from "qrcode.react";
 import {
   Dialog,
   DialogContent,
