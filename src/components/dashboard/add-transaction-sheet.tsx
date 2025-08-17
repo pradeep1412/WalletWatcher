@@ -120,7 +120,7 @@ function ManualTransactionForm({ onTransactionAdded }: { onTransactionAdded: () 
                 <RadioGroup
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className="flex space-x-4"
+                  className="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0"
                 >
                   <FormItem className="flex items-center space-x-2 space-y-0">
                     <FormControl>
@@ -209,7 +209,7 @@ function ManualTransactionForm({ onTransactionAdded }: { onTransactionAdded: () 
         />
         <SheetFooter className="pt-4">
            <SheetClose asChild>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
+                <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
@@ -309,7 +309,7 @@ function ImportTransactionsSection({ onImportCompleted }: { onImportCompleted: (
       <Input type="file" accept=".xlsx" onChange={handleFileChange} />
       <SheetFooter>
          <SheetClose asChild>
-            <Button onClick={handleImport} disabled={!file || isImporting}>
+            <Button onClick={handleImport} className="w-full sm:w-auto" disabled={!file || isImporting}>
                 {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Import File
             </Button>
@@ -355,3 +355,5 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     </Sheet>
   );
 }
+
+    
