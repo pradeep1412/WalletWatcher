@@ -12,10 +12,11 @@ export function OverviewCards() {
     let income = 0;
     let expenses = 0;
     transactions.forEach((t) => {
+      const amount = Math.abs(t.amount);
       if (t.type === "income") {
-        income += t.amount;
+        income += amount;
       } else {
-        expenses += t.amount;
+        expenses += amount;
       }
     });
     return { income, expenses, balance: income - expenses };
