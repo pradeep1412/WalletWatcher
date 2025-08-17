@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
-import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
+import { useWalletWatcher } from "@/hooks/use-wallet-watcher.tsx";
 
 export function SpendingChart() {
   const { transactions, categories, user } = useWalletWatcher();
