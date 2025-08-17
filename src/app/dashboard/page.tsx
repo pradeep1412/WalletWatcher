@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
@@ -6,9 +7,8 @@ import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { Goals } from "@/components/dashboard/goals";
 import { TransactionsList } from "@/components/dashboard/recent-transactions";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
-import { ImportSheet } from "@/components/dashboard/import-sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Upload } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { DashboardPeriodFilter } from "@/components/dashboard/dashboard-period-filter";
 
 export default function DashboardPage() {
@@ -27,12 +27,6 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-2">
            <DashboardPeriodFilter />
-          <ImportSheet>
-            <Button variant="outline">
-              <Upload className="mr-2 h-4 w-4" />
-              Import
-            </Button>
-          </ImportSheet>
           <AddTransactionSheet>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
