@@ -1,16 +1,19 @@
 
 "use client";
 
+import { useState } from "react";
 import { TransactionsList } from "@/components/dashboard/recent-transactions";
 import { Button } from "@/components/ui/button";
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
-import { Download } from "lucide-react";
+import { Download, QrCode } from "lucide-react";
 import * as xlsx from "xlsx";
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
+import { ShareReportDialog } from "@/components/dashboard/share-report-dialog";
 
 export default function TransactionsPage() {
   const { transactions, categories } = useWalletWatcher();
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const handleDownload = () => {
     const dataForSheet = transactions.map((tx) => ({
@@ -42,22 +45,36 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            All Transactions
-          </h1>
-          <p className="text-muted-foreground">
-            A complete history of your income and expenses.
-          </p>
+    <>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              All Transactions
+            </h1>
+            <p className="text-muted-foreground">
+              A complete history of your income and expenses.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setIsShareOpen(true)} variant="outline" disabled={transactions.length === 0}>
+              <QrCode className="mr-2 h-4 w-4" />
+              Share via QR
+            </Button>
+            <Button onClick={handleDownload} disabled={transactions.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Download Report
+            </Button>
+          </div>
         </div>
-        <Button onClick={handleDownload} disabled={transactions.length === 0}>
-          <Download className="mr-2 h-4 w-4" />
-          Download Report
-        </Button>
+        <TransactionsList />
       </div>
-      <TransactionsList />
-    </div>
+      <ShareReportDialog 
+        isOpen={isShareOpen}
+        setIsOpen={setIsShareOpen}
+        transactions={transactions}
+        categories={categories}
+      />
+    </>
   );
 }
