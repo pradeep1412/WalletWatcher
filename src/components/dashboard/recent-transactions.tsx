@@ -33,7 +33,8 @@ export function TransactionsList({ limit }: { limit?: number }) {
     }).format(amount);
   };
   
-  const displayedTransactions = limit ? filteredTransactions.slice(0, limit) : filteredTransactions;
+  const transactions = filteredTransactions || [];
+  const displayedTransactions = limit ? transactions.slice(0, limit) : transactions;
 
   return (
     <Card>
@@ -89,7 +90,7 @@ export function TransactionsList({ limit }: { limit?: number }) {
           </TableBody>
         </Table>
       </CardContent>
-      {limit && filteredTransactions.length > limit && (
+      {limit && transactions.length > limit && (
         <CardFooter className="justify-end">
           <Button asChild variant="ghost" size="sm">
             <Link href="/dashboard/transactions">
