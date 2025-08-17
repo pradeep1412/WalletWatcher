@@ -44,7 +44,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     loading: true,
     error: null,
   });
-  const [period, setPeriod] = useState<Period>('month');
+  const [period, setPeriod] = useState<Period>('week');
 
   const loadData = useCallback(async () => {
     setState((s) => ({ ...s, loading: true }));
