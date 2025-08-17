@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher.tsx";
 
 export function SpendingChart() {
@@ -39,8 +39,18 @@ export function SpendingChart() {
       currency: "USD",
     }).format(amount);
   };
+  
+  const COLORS = [
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+    '#8884d8',
+    '#82ca9d',
+  ];
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border bg-background p-2 shadow-sm">
@@ -50,7 +60,7 @@ export function SpendingChart() {
                 Category
               </span>
               <span className="font-bold text-foreground">
-                {label}
+                {payload[0].name}
               </span>
             </div>
             <div className="flex flex-col">
@@ -77,17 +87,27 @@ export function SpendingChart() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={{}} className="mx-auto aspect-video h-[250px]">
+        <ChartContainer config={{}} className="mx-auto aspect-square h-[250px]">
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} angle={-45} textAnchor="end" height={60} />
-                <YAxis tickFormatter={(value) => formatCurrency(Number(value))} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))' }}/>
+              <PieChart>
+                <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                <Bar dataKey="value" fill="hsl(var(--chart-1))" name="Spent" />
-              </BarChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+              </PieChart>
             </ResponsiveContainer>
           ) : (
             <div className="flex h-full items-center justify-center">
