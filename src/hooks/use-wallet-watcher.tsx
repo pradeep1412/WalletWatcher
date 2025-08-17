@@ -18,7 +18,7 @@ import {
   type Period,
 } from "@/lib/types";
 import { useToast } from "./use-toast";
-import { startOfWeek, startOfMonth, startOfYear, isWithinInterval } from 'date-fns';
+import { startOfWeek, startOfMonth, startOfYear, isWithinInterval, endOfWeek, endOfMonth, endOfYear } from 'date-fns';
 
 
 type WalletWatcherContextType = AppState & {
@@ -44,7 +44,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     loading: true,
     error: null,
   });
-  const [period, setPeriod] = useState<Period>('week');
+  const [period, setPeriod] = useState<Period>('month');
 
   const loadData = useCallback(async () => {
     setState((s) => ({ ...s, loading: true }));
@@ -86,17 +86,16 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     const transactions = state.transactions || [];
     if (state.loading) return [];
     const now = new Date();
-    let startDate: Date;
-
-    if (period === 'week') {
-      startDate = startOfWeek(now);
-    } else if (period === 'month') {
-      startDate = startOfMonth(now);
-    } else { // year
-      startDate = startOfYear(now);
-    }
     
-    return transactions.filter(t => isWithinInterval(new Date(t.date), { start: startDate, end: now }));
+    const periodMap = {
+      week: { start: startOfWeek(now), end: endOfWeek(now) },
+      month: { start: startOfMonth(now), end: endOfMonth(now) },
+      year: { start: startOfYear(now), end: endOfYear(now) },
+    };
+
+    const currentPeriod = periodMap[period];
+    
+    return transactions.filter(t => isWithinInterval(new Date(t.date), { start: currentPeriod.start, end: currentPeriod.end }));
   }, [state.transactions, period, state.loading]);
 
   const addTransaction = async (transaction: Omit<Transaction, "id">) => {
@@ -118,13 +117,13 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     try {
       await db.setBudget(budget);
       await loadData();
-      toast({ title: "Success", description: "Budget updated." });
+      toast({ title: "Success", description: "Goal updated." });
     } catch (error) {
       console.error(error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to set budget.",
+        description: "Failed to set goal.",
       });
     }
   };

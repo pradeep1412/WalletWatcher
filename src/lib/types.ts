@@ -21,6 +21,7 @@ export interface Transaction {
 export interface Budget {
   categoryId: number;
   amount: number;
+  recurrence: 'one-time' | 'weekly' | 'monthly' | 'yearly';
   isCompleted?: boolean;
 }
 

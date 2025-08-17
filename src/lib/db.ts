@@ -42,7 +42,8 @@ class DatabaseService {
           db.createObjectStore(CATEGORIES_STORE, { keyPath: "id", autoIncrement: true });
         }
         if (!db.objectStoreNames.contains(BUDGETS_STORE)) {
-          db.createObjectStore(BUDGETS_STORE, { keyPath: "categoryId" });
+          const budgetStore = db.createObjectStore(BUDGETS_STORE, { keyPath: "categoryId" });
+          budgetStore.createIndex("recurrence", "recurrence", { unique: false });
         }
       };
 
@@ -151,7 +152,9 @@ class DatabaseService {
         getRequest.onsuccess = () => {
             const existingBudget = getRequest.result;
             const newBudget = { ...(existingBudget || {}), ...budget };
-            if (!existingBudget || existingBudget.amount !== newBudget.amount) {
+            
+            // If the amount or recurrence changes, reset the completion status
+            if (!existingBudget || existingBudget.amount !== newBudget.amount || existingBudget.recurrence !== newBudget.recurrence) {
                 newBudget.isCompleted = false;
             }
 
@@ -170,10 +173,15 @@ class DatabaseService {
         request.onsuccess = () => {
           const budget = request.result;
           if (budget) {
-            budget.isCompleted = true;
-            const updateRequest = store.put(budget);
-            updateRequest.onsuccess = () => resolve();
-            updateRequest.onerror = () => reject(updateRequest.error);
+            if (budget.recurrence === 'one-time') {
+                budget.isCompleted = true;
+                const updateRequest = store.put(budget);
+                updateRequest.onsuccess = () => resolve();
+                updateRequest.onerror = () => reject(updateRequest.error);
+            } else {
+                // For recurring goals, we don't mark them permanently complete
+                resolve();
+            }
           } else {
             reject(new Error(`Budget with categoryId ${categoryId} not found`));
           }

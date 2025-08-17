@@ -16,38 +16,49 @@ import { Pencil, Plus, Trophy, CheckCircle } from "lucide-react";
 import { SetBudgetSheet } from "./set-budget-sheet";
 import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 export function BudgetGoals() {
-  const { filteredTransactions, categories, budgets, markGoalAsComplete } = useWalletWatcher();
+  const { filteredTransactions, categories, budgets, markGoalAsComplete, period } = useWalletWatcher();
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [celebratingGoal, setCelebratingGoal] = useState<number | null>(null);
 
   const budgetData = useMemo(() => {
-    return categories
-      .filter(c => c.name.toLowerCase() !== 'income')
-      .map((category) => {
-        const budget = budgets.find((b) => b.categoryId === category.id);
+    return budgets
+      .map((budget) => {
+        const category = categories.find((c) => c.categoryId === budget.categoryId);
+        if (!category) return null;
+
         const spent = (filteredTransactions || [])
-          .filter((t) => t.categoryId === category.id && t.type === "expense")
+          .filter((t) => t.categoryId === budget.categoryId && t.type === "expense")
           .reduce((acc, t) => acc + t.amount, 0);
-        const budgetAmount = budget?.amount || 0;
+
+        const budgetAmount = budget.amount;
         const progress = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0;
         const isAchieved = budgetAmount > 0 && spent <= budgetAmount;
-        const isCompleted = budget?.isCompleted || false;
+
+        const isPeriodMatch = 
+            (budget.recurrence === 'weekly' && period === 'week') ||
+            (budget.recurrence === 'monthly' && period === 'month') ||
+            (budget.recurrence === 'yearly' && period === 'year') ||
+             budget.recurrence === 'one-time';
 
         return {
-          id: category.id,
+          id: budget.categoryId,
           name: category.name,
           spent,
           budget: budgetAmount,
           progress,
           isAchieved,
-          isCompleted,
+          isCompleted: budget.isCompleted,
+          recurrence: budget.recurrence,
+          isPeriodMatch,
         };
       })
-      .filter(b => b.budget > 0);
-  }, [filteredTransactions, categories, budgets]);
+      .filter(b => b && b.budget > 0 && b.isPeriodMatch)
+      .sort((a,b) => (a.name > b.name ? 1 : -1));
+  }, [filteredTransactions, categories, budgets, period]);
 
   useEffect(() => {
       if(celebratingGoal !== null) {
@@ -73,6 +84,8 @@ export function BudgetGoals() {
     }).format(amount);
   };
 
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
   return (
     <Card className="h-full">
       {celebratingGoal !== null && <Confetti />}
@@ -80,12 +93,12 @@ export function BudgetGoals() {
         <div>
           <CardTitle>Budget Goals</CardTitle>
           <CardDescription>
-            Your monthly budget goals.
+            Your progress for the selected period.
           </CardDescription>
         </div>
         <Button variant="outline" size="sm" onClick={() => handleSetBudget()}>
           <Plus className="mr-2 h-4 w-4" />
-          Set Budget
+          Set Goal
         </Button>
       </CardHeader>
       <CardContent>
@@ -93,22 +106,24 @@ export function BudgetGoals() {
           <div className="space-y-4">
             {budgetData.length > 0 ? (
               budgetData.map((item) => (
-                <div key={item.name}>
+                <div key={item.id}>
                   <div className="mb-1 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{item.name}</span>
-                       {item.isCompleted && (
+                       {item.isCompleted && item.recurrence === 'one-time' ? (
                         <div className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5">
                             <Trophy className="h-3 w-3 text-accent" />
                             <span className="text-xs font-semibold text-accent">Goal Achieved!</span>
                         </div>
+                      ) : (
+                         <Badge variant="secondary" className="text-xs">{capitalize(item.recurrence)}</Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-muted-foreground">
                         {formatCurrency(item.spent)} / {formatCurrency(item.budget)}
                       </span>
-                      {item.isAchieved && !item.isCompleted ? (
+                      {item.isAchieved && !item.isCompleted && item.recurrence === 'one-time' ? (
                         <Button size="sm" variant="outline" onClick={() => handleMarkComplete(item.id)}>
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Mark as Complete
@@ -121,13 +136,14 @@ export function BudgetGoals() {
                     </div>
                   </div>
                   <Progress value={item.progress} className={cn({
-                    "[&>div]:bg-accent": item.isCompleted || item.isAchieved,
+                    "[&>div]:bg-accent": (item.isCompleted && item.recurrence === 'one-time') || item.isAchieved,
                   })}/>
                 </div>
               ))
             ) : (
-                <div className="flex h-[200px] items-center justify-center">
-                    <p className="text-muted-foreground">No budgets set yet.</p>
+                <div className="flex h-[200px] flex-col items-center justify-center text-center">
+                    <p className="font-semibold">No Goals for this Period</p>
+                    <p className="text-sm text-muted-foreground">Try setting a goal or changing the period filter.</p>
                 </div>
             )}
           </div>
