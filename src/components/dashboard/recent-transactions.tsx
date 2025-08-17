@@ -70,7 +70,7 @@ export function RecentTransactions() {
                     }`}
                   >
                     {tx.type === "income" ? "+" : "-"}
-                    {formatCurrency(tx.amount)}
+                    {formatCurrency(Math.abs(tx.amount))}
                   </TableCell>
                 </TableRow>
               ))
