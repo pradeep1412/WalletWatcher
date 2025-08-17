@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { DonutChart } from "@tremor/react";
 import {
   Card,
   CardContent,
@@ -13,8 +12,6 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
 } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
@@ -23,16 +20,17 @@ export function SpendingChart() {
   const { transactions, categories } = useWalletWatcher();
 
   const chartData = useMemo(() => {
-    const expenseData: { [key: number]: number } = {};
+    const expenseData: { [key: string]: number } = {};
     transactions
       .filter((t) => t.type === "expense")
       .forEach((t) => {
-        expenseData[t.categoryId] = (expenseData[t.categoryId] || 0) + t.amount;
+        const categoryName = categories.find((c) => c.id === t.categoryId)?.name || "Uncategorized";
+        expenseData[categoryName] = (expenseData[categoryName] || 0) + t.amount;
       });
 
-    return Object.entries(expenseData).map(([categoryId, amount]) => ({
-      name: categories.find((c) => c.id === Number(categoryId))?.name || "Uncategorized",
-      value: amount,
+    return Object.entries(expenseData).map(([name, value]) => ({
+      name,
+      value,
     }));
   }, [transactions, categories]);
   
@@ -59,6 +57,7 @@ export function SpendingChart() {
                 fill="#8884d8"
                 paddingAngle={5}
                 dataKey="value"
+                nameKey="name"
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -83,7 +82,7 @@ export function SpendingChart() {
                               Amount
                             </span>
                             <span className="font-bold">
-                              ${payload[0].value.toFixed(2)}
+                              ${(payload[0].value as number).toFixed(2)}
                             </span>
                           </div>
                         </div>
