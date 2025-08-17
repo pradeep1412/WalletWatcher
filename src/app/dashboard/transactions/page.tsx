@@ -10,13 +10,14 @@ import * as xlsx from "xlsx";
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
 import { ShareReportDialog } from "@/components/dashboard/share-report-dialog";
+import { DashboardPeriodFilter } from "@/components/dashboard/dashboard-period-filter";
 
 export default function TransactionsPage() {
-  const { transactions, categories } = useWalletWatcher();
+  const { filteredTransactions, categories } = useWalletWatcher();
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   const handleDownload = () => {
-    const dataForSheet = transactions.map((tx) => ({
+    const dataForSheet = filteredTransactions.map((tx) => ({
       Date: format(new Date(tx.date), "yyyy-MM-dd"),
       Description: tx.description,
       Category: categories.find((c) => c.id === tx.categoryId)?.name || "N/A",
@@ -56,12 +57,13 @@ export default function TransactionsPage() {
               A complete history of your income and expenses.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setIsShareOpen(true)} variant="outline" disabled={transactions.length === 0}>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <DashboardPeriodFilter />
+            <Button onClick={() => setIsShareOpen(true)} variant="outline" disabled={filteredTransactions.length === 0}>
               <QrCode className="mr-2 h-4 w-4" />
               Share via QR
             </Button>
-            <Button onClick={handleDownload} disabled={transactions.length === 0}>
+            <Button onClick={handleDownload} disabled={filteredTransactions.length === 0}>
               <Download className="mr-2 h-4 w-4" />
               Download Report
             </Button>
@@ -72,7 +74,7 @@ export default function TransactionsPage() {
       <ShareReportDialog 
         isOpen={isShareOpen}
         setIsOpen={setIsShareOpen}
-        transactions={transactions}
+        transactions={filteredTransactions}
         categories={categories}
       />
     </>
