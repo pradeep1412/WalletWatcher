@@ -10,10 +10,8 @@ import {
 } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
 
 export function SpendingChart() {
@@ -35,13 +33,20 @@ export function SpendingChart() {
   }, [transactions, categories]);
   
   const COLORS = ["#1EA8F9", "#30D5C8", "#FFC300", "#FF5733", "#C70039", "#900C3F"];
+  
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Spending by Category</CardTitle>
         <CardDescription>
-          A look at where your money is going this month.
+          A look at where your money is going.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -58,6 +63,7 @@ export function SpendingChart() {
                 paddingAngle={5}
                 dataKey="value"
                 nameKey="name"
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -82,7 +88,7 @@ export function SpendingChart() {
                               Amount
                             </span>
                             <span className="font-bold">
-                              ${(payload[0].value as number).toFixed(2)}
+                              {formatCurrency(payload[0].value as number)}
                             </span>
                           </div>
                         </div>
@@ -92,6 +98,7 @@ export function SpendingChart() {
                   return null;
                 }}
               />
+              <Legend />
             </PieChart>
           ) : (
             <div className="flex h-full items-center justify-center">
