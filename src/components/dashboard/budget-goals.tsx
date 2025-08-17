@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
+import { SetBudgetSheet } from "./set-budget-sheet";
 
 export function BudgetGoals() {
   const { transactions, categories, budgets } = useWalletWatcher();
@@ -43,11 +46,19 @@ export function BudgetGoals() {
 
   return (
     <Card className="h-full">
-      <CardHeader>
-        <CardTitle>Budget Goals</CardTitle>
-        <CardDescription>
-          Tracking your spending against your set budgets.
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Budget Goals</CardTitle>
+          <CardDescription>
+            Tracking your spending against your set budgets.
+          </CardDescription>
+        </div>
+        <SetBudgetSheet>
+          <Button variant="outline" size="sm">
+            <Pencil className="mr-2 h-4 w-4" />
+            Set Budget
+          </Button>
+        </SetBudgetSheet>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[250px]">
