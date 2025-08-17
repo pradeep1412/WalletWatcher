@@ -5,14 +5,16 @@ import {
   type Transaction,
   type Category,
   type Budget,
+  type SavingsGoal,
 } from "./types";
 
 const DB_NAME = "WalletWatcherDB";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Incremented version for new store
 const USER_STORE = "user";
 const TRANSACTIONS_STORE = "transactions";
 const CATEGORIES_STORE = "categories";
 const BUDGETS_STORE = "budgets";
+const SAVINGS_GOALS_STORE = "savingsGoals";
 
 class DatabaseService {
   private db: IDBDatabase | null = null;
@@ -45,6 +47,9 @@ class DatabaseService {
           const budgetStore = db.createObjectStore(BUDGETS_STORE, { keyPath: "categoryId" });
           budgetStore.createIndex("recurrence", "recurrence", { unique: false });
         }
+        if (!db.objectStoreNames.contains(SAVINGS_GOALS_STORE)) {
+           db.createObjectStore(SAVINGS_GOALS_STORE, { keyPath: "id", autoIncrement: true });
+        }
       };
 
       request.onsuccess = (event) => {
@@ -53,6 +58,7 @@ class DatabaseService {
       };
 
       request.onerror = (event) => {
+        console.error("Database error:", (event.target as IDBOpenDBRequest).error);
         reject((event.target as IDBOpenDBRequest).error);
       };
     });
@@ -229,21 +235,65 @@ class DatabaseService {
       });
   }
 
+  // Savings Goals methods
+  async addSavingsGoal(goal: Omit<SavingsGoal, "id" | "currentAmount">): Promise<void> {
+    const store = await this.getStore(SAVINGS_GOALS_STORE, "readwrite");
+    return new Promise((resolve, reject) => {
+        const request = store.add({ ...goal, currentAmount: 0 });
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getSavingsGoals(): Promise<SavingsGoal[]> {
+      const store = await this.getStore(SAVINGS_GOALS_STORE, "readonly");
+      return new Promise((resolve, reject) => {
+          const request = store.getAll();
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+      });
+  }
+  
+  async addFundsToSavingsGoal(goalId: number, amount: number): Promise<void> {
+      const store = await this.getStore(SAVINGS_GOALS_STORE, 'readwrite');
+      return new Promise((resolve, reject) => {
+        const request = store.get(goalId);
+        request.onsuccess = () => {
+          const goal = request.result;
+          if (goal) {
+            goal.currentAmount += amount;
+            const updateRequest = store.put(goal);
+            updateRequest.onsuccess = () => resolve();
+            updateRequest.onerror = () => reject(updateRequest.error);
+          } else {
+            reject(new Error(`Savings goal with id ${goalId} not found`));
+          }
+        };
+        request.onerror = () => reject(request.error);
+      });
+  }
+
+
   // Clear data
   async clearUserData(): Promise<void> {
     const db = await this.openDB();
-    const storeNames = [USER_STORE, TRANSACTIONS_STORE, CATEGORIES_STORE, BUDGETS_STORE];
+    const storeNames = [USER_STORE, TRANSACTIONS_STORE, CATEGORIES_STORE, BUDGETS_STORE, SAVINGS_GOALS_STORE];
     const transaction = db.transaction(storeNames, "readwrite");
     
     return new Promise((resolve, reject) => {
         let count = 0;
         storeNames.forEach(storeName => {
-            const request = transaction.objectStore(storeName).clear();
-            request.onsuccess = () => {
+            if (db.objectStoreNames.contains(storeName)) {
+                const request = transaction.objectStore(storeName).clear();
+                request.onsuccess = () => {
+                    count++;
+                    if (count === storeNames.length) resolve();
+                };
+                request.onerror = () => reject(request.error);
+            } else {
                 count++;
                 if (count === storeNames.length) resolve();
-            };
-            request.onerror = () => reject(request.error);
+            }
         });
     });
   }

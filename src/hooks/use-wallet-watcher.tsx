@@ -16,6 +16,7 @@ import {
   type Transaction,
   type Budget,
   type Period,
+  type SavingsGoal
 } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { startOfWeek, startOfMonth, startOfYear, isWithinInterval, endOfWeek, endOfMonth, endOfYear } from 'date-fns';
@@ -29,6 +30,8 @@ type WalletWatcherContextType = AppState & {
   addTransaction: (transaction: Omit<Transaction, "id">) => Promise<void>;
   setBudget: (budget: Budget) => Promise<void>;
   markGoalAsComplete: (categoryId: number) => Promise<void>;
+  addSavingsGoal: (goal: Omit<SavingsGoal, "id" | "currentAmount">) => Promise<void>;
+  addFundsToSavingsGoal: (goalId: number, amount: number) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -42,6 +45,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     transactions: [],
     categories: [],
     budgets: [],
+    savingsGoals: [],
     loading: true,
     error: null,
   });
@@ -58,12 +62,13 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
         router.replace("/");
         return;
       }
-      const [transactions, categories, budgets] = await Promise.all([
+      const [transactions, categories, budgets, savingsGoals] = await Promise.all([
         db.getTransactions(),
         db.getCategories(),
         db.getBudgets(),
+        db.getSavingsGoals(),
       ]);
-      setState({ user, transactions, categories, budgets, loading: false, error: null });
+      setState({ user, transactions, categories, budgets, savingsGoals, loading: false, error: null });
     } catch (error) {
       console.error(error);
       setState({
@@ -71,6 +76,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
         transactions: [],
         categories: [],
         budgets: [],
+        savingsGoals: [],
         loading: false,
         error: error instanceof Error ? error : new Error("An unknown error occurred"),
       });
@@ -146,6 +152,37 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addSavingsGoal = async (goal: Omit<SavingsGoal, "id" | "currentAmount">) => {
+    try {
+        await db.addSavingsGoal(goal);
+        await loadData();
+        toast({ title: "Success", description: "Savings goal created." });
+    } catch(error) {
+        console.error(error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to create savings goal.",
+        });
+    }
+  }
+
+  const addFundsToSavingsGoal = async (goalId: number, amount: number) => {
+    try {
+        await db.addFundsToSavingsGoal(goalId, amount);
+        await loadData();
+        toast({ title: "Success", description: "Funds added to goal." });
+    } catch(error) {
+        console.error(error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to add funds.",
+        });
+    }
+  }
+
+
   const logout = async () => {
     try {
       await db.clearUserData();
@@ -170,6 +207,8 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     setBudget,
     logout,
     markGoalAsComplete,
+    addSavingsGoal,
+    addFundsToSavingsGoal,
   };
 
   return (

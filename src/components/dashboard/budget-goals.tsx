@@ -100,9 +100,9 @@ export function BudgetGoals() {
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   
-  if (loading) {
+  if (loading && budgets.length === 0) {
     return (
-        <Card className="h-full">
+        <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                   <Skeleton className="h-6 w-32" />
@@ -111,9 +111,8 @@ export function BudgetGoals() {
               <Skeleton className="h-9 w-24" />
             </CardHeader>
             <CardContent>
-                <ScrollArea className="h-[250px]">
+                <ScrollArea className="h-[150px]">
                   <div className="space-y-4">
-                      <BudgetGoalSkeleton />
                       <BudgetGoalSkeleton />
                       <BudgetGoalSkeleton />
                   </div>
@@ -124,13 +123,13 @@ export function BudgetGoals() {
   }
 
   return (
-    <Card className="h-full">
+    <Card>
       {celebratingGoal !== null && <Confetti />}
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>Budget Goals</CardTitle>
+          <CardTitle>Spending Goals</CardTitle>
           <CardDescription>
-            Your progress for the selected period.
+            Your spending caps for the selected period.
           </CardDescription>
         </div>
         <Button variant="outline" size="sm" onClick={() => handleSetBudget()}>
@@ -139,7 +138,7 @@ export function BudgetGoals() {
         </Button>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[250px]">
+        <ScrollArea className="h-[150px]">
           <div className="space-y-4">
             {budgetData.length > 0 ? (
               budgetData.map((item) => item && (
@@ -178,8 +177,8 @@ export function BudgetGoals() {
                 </div>
               ))
             ) : (
-                <div className="flex h-[200px] flex-col items-center justify-center text-center">
-                    <p className="font-semibold">No Goals for this Period</p>
+                <div className="flex h-[100px] flex-col items-center justify-center text-center">
+                    <p className="font-semibold">No Spending Goals for this Period</p>
                     <p className="text-sm text-muted-foreground">Try setting a goal or changing the period filter.</p>
                 </div>
             )}

@@ -25,6 +25,13 @@ export interface Budget {
   isCompleted?: boolean;
 }
 
+export interface SavingsGoal {
+  id: number;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+}
+
 export type Period = 'week' | 'month' | 'year';
 
 export interface AppState {
@@ -32,6 +39,7 @@ export interface AppState {
   transactions: Transaction[];
   categories: Category[];
   budgets: Budget[];
+  savingsGoals: SavingsGoal[];
   loading: boolean;
   error: Error | null;
 }
