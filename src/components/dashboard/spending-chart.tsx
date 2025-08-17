@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher.tsx";
 
 export function SpendingChart() {
@@ -44,7 +44,7 @@ export function SpendingChart() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(user?.country ? `en-${user.country}` : 'en-US', {
       style: "currency",
-      currency: "USD", // This should ideally be dynamic based on user settings
+      currency: "USD",
     }).format(amount);
   };
 
@@ -87,53 +87,55 @@ export function SpendingChart() {
       <CardContent>
         <ChartContainer config={{}} className="mx-auto aspect-square h-[250px]">
           {chartData.length > 0 ? (
-            <PieChart width={250} height={250}>
-              <Pie
-                data={chartData}
-                cx={125}
-                cy={125}
-                innerRadius={60}
-                outerRadius={100}
-                fill="#8884d8"
-                paddingAngle={5}
-                dataKey="value"
-                nameKey="name"
-                labelLine={false}
-                label={({
-                  cx,
-                  cy,
-                  midAngle,
-                  innerRadius,
-                  outerRadius,
-                  percent,
-                }) => {
-                  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                  const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                  const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                  return (
-                    <text
-                      x={x}
-                      y={y}
-                      fill="white"
-                      textAnchor={x > cx ? "start" : "end"}
-                      dominantBaseline="central"
-                      className="text-xs font-bold"
-                    >
-                      {`${(percent * 100).toFixed(0)}%`}
-                    </text>
-                  );
-                }}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-            </PieChart>
+            <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    paddingAngle={5}
+                    dataKey="value"
+                    nameKey="name"
+                    labelLine={false}
+                    label={({
+                    cx,
+                    cy,
+                    midAngle,
+                    innerRadius,
+                    outerRadius,
+                    percent,
+                    }) => {
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                    return (
+                        <text
+                        x={x}
+                        y={y}
+                        fill="white"
+                        textAnchor={x > cx ? "start" : "end"}
+                        dominantBaseline="central"
+                        className="text-xs font-bold"
+                        >
+                        {`${(percent * 100).toFixed(0)}%`}
+                        </text>
+                    );
+                    }}
+                >
+                    {chartData.map((entry, index) => (
+                    <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                    />
+                    ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                </PieChart>
+            </ResponsiveContainer>
           ) : (
             <div className="flex h-full items-center justify-center">
               <p className="text-muted-foreground">
