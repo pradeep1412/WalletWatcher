@@ -83,7 +83,8 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
   }, [loadData]);
   
   const filteredTransactions = useMemo(() => {
-    if (state.loading || !state.transactions) return [];
+    const transactions = state.transactions || [];
+    if (state.loading) return [];
     const now = new Date();
     let startDate: Date;
 
@@ -95,7 +96,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
       startDate = startOfYear(now);
     }
     
-    return state.transactions.filter(t => isWithinInterval(new Date(t.date), { start: startDate, end: now }));
+    return transactions.filter(t => isWithinInterval(new Date(t.date), { start: startDate, end: now }));
   }, [state.transactions, period, state.loading]);
 
   const addTransaction = async (transaction: Omit<Transaction, "id">) => {
