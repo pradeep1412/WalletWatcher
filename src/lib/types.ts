@@ -30,6 +30,7 @@ export interface SavingsGoal {
   name: string;
   targetAmount: number;
   currentAmount: number;
+  recurrence: 'one-time' | 'weekly' | 'monthly' | 'yearly';
 }
 
 export type Period = 'week' | 'month' | 'year';

@@ -25,10 +25,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const formSchema = z.object({
   name: z.string().min(1, "Goal name is required."),
   targetAmount: z.coerce.number().positive("Target amount must be positive."),
+  recurrence: z.enum(["one-time", "weekly", "monthly", "yearly"]),
 });
 
 export function AddSavingsGoalSheet({ 
@@ -45,6 +47,7 @@ export function AddSavingsGoalSheet({
     defaultValues: {
       name: "",
       targetAmount: 0,
+      recurrence: "one-time",
     },
   });
 
@@ -95,6 +98,48 @@ export function AddSavingsGoalSheet({
                   <FormLabel>Target Amount</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="1000.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="recurrence"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Recurrence</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="grid grid-cols-2 gap-4"
+                    >
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="one-time" />
+                        </FormControl>
+                        <FormLabel className="font-normal">One-Time</FormLabel>
+                      </FormItem>
+                       <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="weekly" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Weekly</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="monthly" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Monthly</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="yearly" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Yearly</FormLabel>
+                      </FormItem>
+                    </RadioGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

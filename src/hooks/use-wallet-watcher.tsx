@@ -19,9 +19,6 @@ import {
   type SavingsGoal
 } from "@/lib/types";
 import { useToast } from "./use-toast";
-import { startOfWeek, startOfMonth, startOfYear, isWithinInterval, endOfWeek, endOfMonth, endOfYear } from 'date-fns';
-import { runDailyTasks } from "@/lib/scheduler";
-
 
 type WalletWatcherContextType = AppState & {
   filteredTransactions: Transaction[];
@@ -54,9 +51,6 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
   const loadData = useCallback(async () => {
     setState((s) => ({ ...s, loading: true }));
     try {
-      // Run scheduler first
-      await runDailyTasks();
-
       const user = await db.getUser();
       if (!user) {
         router.replace("/");
@@ -97,15 +91,18 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     if (state.loading) return [];
     const now = new Date();
     
-    const periodMap = {
-      week: { start: startOfWeek(now), end: endOfWeek(now) },
-      month: { start: startOfMonth(now), end: endOfMonth(now) },
-      year: { start: startOfYear(now), end: endOfYear(now) },
+    const periodMap: Record<Period, { start: Date; end: Date }> = {
+        week: { start: new Date(now.setDate(now.getDate() - now.getDay())), end: new Date() },
+        month: { start: new Date(now.getFullYear(), now.getMonth(), 1), end: new Date() },
+        year: { start: new Date(now.getFullYear(), 0, 1), end: new Date() },
     };
 
     const currentPeriod = periodMap[period];
     
-    return transactions.filter(t => isWithinInterval(new Date(t.date), { start: currentPeriod.start, end: currentPeriod.end }));
+    return transactions.filter(t => {
+        const tDate = new Date(t.date);
+        return tDate >= currentPeriod.start && tDate <= currentPeriod.end;
+    });
   }, [state.transactions, period, state.loading]);
 
   const addTransaction = async (transaction: Omit<Transaction, "id">) => {

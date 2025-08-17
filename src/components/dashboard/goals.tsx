@@ -209,6 +209,8 @@ function SavingsGoalsTab() {
     }).format(amount);
   };
   
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
   if (loading && savingsGoals.length === 0) {
     return (
         <div className="space-y-4 pt-4">
@@ -239,6 +241,7 @@ function SavingsGoalsTab() {
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">{goal.name}</span>
+                                <Badge variant="secondary" className="text-xs">{capitalize(goal.recurrence)}</Badge>
                                 {progress >= 100 && <Target className="h-4 w-4 text-green-500" />}
                             </div>
                             <div className="flex items-center gap-2">
