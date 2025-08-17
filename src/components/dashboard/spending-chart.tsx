@@ -33,6 +33,8 @@ export function SpendingChart() {
     }));
   }, [transactions, categories]);
 
+  console.log("chartData:", chartData);
+
   const COLORS = [
     "hsl(var(--chart-1))",
     "hsl(var(--chart-2))",
