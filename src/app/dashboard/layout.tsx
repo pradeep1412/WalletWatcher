@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import {
   Wallet,
   LayoutDashboard,
@@ -31,6 +32,7 @@ import {
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, logout, loading } = useWalletWatcher();
+  const pathname = usePathname();
 
   if (loading) {
     return (
@@ -54,13 +56,13 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard" isActive>
+              <SidebarMenuButton href="/dashboard" isActive={pathname === '/dashboard'}>
                 <LayoutDashboard />
                 <span>Dashboard</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="#">
+              <SidebarMenuButton href="/dashboard/transactions" isActive={pathname === '/dashboard/transactions'}>
                 <ArrowRightLeft />
                 <span>Transactions</span>
               </SidebarMenuButton>
