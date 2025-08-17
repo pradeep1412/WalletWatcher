@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -109,8 +108,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
       await db.clearUserData();
       router.replace("/");
       toast({ title: "Logged out", description: "Your data has been cleared." });
-    } catch (error) {
-      console.error(error);
+    } catch (error)      console.error(error);
       toast({
         variant: "destructive",
         title: "Logout Failed",
