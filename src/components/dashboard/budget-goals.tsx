@@ -12,7 +12,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus, Trophy } from "lucide-react";
+import { Pencil, Plus, Trophy, CheckCircle } from "lucide-react";
 import { SetBudgetSheet } from "./set-budget-sheet";
 import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,8 @@ export function BudgetGoals() {
   const { transactions, categories, budgets } = useWalletWatcher();
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [completedGoals, setCompletedGoals] = useState<Set<number>>(new Set());
+  const [celebratingGoal, setCelebratingGoal] = useState<number | null>(null);
 
   const budgetData = useMemo(() => {
     return categories
@@ -33,6 +34,7 @@ export function BudgetGoals() {
           .reduce((acc, t) => acc + t.amount, 0);
         const progress = budget > 0 ? (spent / budget) * 100 : 0;
         const isAchieved = budget > 0 && spent <= budget;
+        const isCompleted = completedGoals.has(category.id);
         return {
           id: category.id,
           name: category.name,
@@ -40,24 +42,28 @@ export function BudgetGoals() {
           budget,
           progress,
           isAchieved,
+          isCompleted,
         };
       })
       .filter(b => b.budget > 0);
-  }, [transactions, categories, budgets]);
+  }, [transactions, categories, budgets, completedGoals]);
 
   useEffect(() => {
-      const anyAchieved = budgetData.some(b => b.isAchieved && b.progress >= 100);
-      if(anyAchieved) {
-          setShowConfetti(true);
-          const timer = setTimeout(() => setShowConfetti(false), 5000);
+      if(celebratingGoal !== null) {
+          const timer = setTimeout(() => setCelebratingGoal(null), 5000); // Confetti lasts 5s
           return () => clearTimeout(timer);
       }
-  }, [budgetData])
+  }, [celebratingGoal])
 
   const handleSetBudget = (categoryId?: number) => {
     setSelectedCategory(categoryId);
     setIsSheetOpen(true);
   };
+  
+  const handleMarkComplete = (categoryId: number) => {
+      setCompletedGoals(prev => new Set(prev).add(categoryId));
+      setCelebratingGoal(categoryId);
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -68,7 +74,7 @@ export function BudgetGoals() {
 
   return (
     <Card className="h-full">
-      {showConfetti && <Confetti />}
+      {celebratingGoal !== null && <Confetti />}
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Budget Goals</CardTitle>
@@ -90,7 +96,7 @@ export function BudgetGoals() {
                   <div className="mb-1 flex justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{item.name}</span>
-                       {item.isAchieved && item.progress >= 100 && (
+                       {item.isCompleted && (
                         <div className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5">
                             <Trophy className="h-3 w-3 text-accent" />
                             <span className="text-xs font-semibold text-accent">Goal Achieved!</span>
@@ -107,8 +113,16 @@ export function BudgetGoals() {
                     </div>
                   </div>
                   <Progress value={item.progress} className={cn({
-                    "[&>div]:bg-accent": item.isAchieved && item.progress >= 100
+                    "[&>div]:bg-accent": item.isCompleted,
                   })}/>
+                  {item.isAchieved && !item.isCompleted && (
+                      <div className="mt-2 text-right">
+                          <Button size="sm" variant="outline" onClick={() => handleMarkComplete(item.id)}>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                              Mark as Complete
+                          </Button>
+                      </div>
+                  )}
                 </div>
               ))
             ) : (
