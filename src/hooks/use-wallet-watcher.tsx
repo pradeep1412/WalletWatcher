@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -89,15 +90,29 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
   const filteredTransactions = useMemo(() => {
     const transactions = state.transactions || [];
     if (state.loading) return [];
-    const now = new Date();
     
-    const periodMap: Record<Period, { start: Date; end: Date }> = {
-        week: { start: new Date(now.setDate(now.getDate() - now.getDay())), end: new Date() },
-        month: { start: new Date(now.getFullYear(), now.getMonth(), 1), end: new Date() },
-        year: { start: new Date(now.getFullYear(), 0, 1), end: new Date() },
+    const getPeriodDates = (period: Period) => {
+        const now = new Date();
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+        switch (period) {
+            case 'week':
+                return { start: startOfWeek, end: new Date() };
+            case 'month':
+                return { start: startOfMonth, end: new Date() };
+            case 'year':
+                return { start: startOfYear, end: new Date() };
+            default:
+                return { start: startOfWeek, end: new Date() };
+        }
     };
 
-    const currentPeriod = periodMap[period];
+    const currentPeriod = getPeriodDates(period);
     
     return transactions.filter(t => {
         const tDate = new Date(t.date);
