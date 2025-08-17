@@ -48,6 +48,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { type Transaction } from "@/lib/types";
+import { QrScanner } from "./qr-scanner";
 
 const formSchema = z.object({
   description: z.string().min(1, "Description is required."),
@@ -334,14 +335,15 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
         <SheetHeader>
           <SheetTitle>Add Transaction</SheetTitle>
           <SheetDescription>
-            Add a single transaction manually or import multiple from a file.
+            Add a transaction manually, import from a file, or scan a QR code.
           </SheetDescription>
         </SheetHeader>
         <div className="mt-4">
             <Tabs defaultValue="manual">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="manual">Manual</TabsTrigger>
                     <TabsTrigger value="import">Import</TabsTrigger>
+                    <TabsTrigger value="scan">Scan QR</TabsTrigger>
                 </TabsList>
                 <TabsContent value="manual">
                     <ManualTransactionForm onTransactionAdded={handleCloseSheet} />
@@ -349,11 +351,12 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                 <TabsContent value="import">
                     <ImportTransactionsSection onImportCompleted={handleCloseSheet} />
                 </TabsContent>
+                <TabsContent value="scan">
+                    <QrScanner onScanSuccess={handleCloseSheet} />
+                </TabsContent>
             </Tabs>
         </div>
       </SheetContent>
     </Sheet>
   );
 }
-
-    

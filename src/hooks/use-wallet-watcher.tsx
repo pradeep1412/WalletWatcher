@@ -17,7 +17,8 @@ import {
   type Transaction,
   type Budget,
   type Period,
-  type SavingsGoal
+  type SavingsGoal,
+  type Category,
 } from "@/lib/types";
 import { useToast } from "./use-toast";
 
@@ -26,6 +27,7 @@ type WalletWatcherContextType = AppState & {
   period: Period;
   setPeriod: (period: Period) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => Promise<void>;
+  addMultipleTransactions: (transactions: Omit<Transaction, "id" | "categoryId"> & { categoryName: string }[]) => Promise<void>;
   setBudget: (budget: Budget) => Promise<void>;
   markGoalAsComplete: (categoryId: number) => Promise<void>;
   addSavingsGoal: (goal: Omit<SavingsGoal, "id" | "currentAmount" | "isCompleted">) => Promise<void>;
@@ -148,6 +150,45 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addMultipleTransactions = async (transactions: (Omit<Transaction, "id" | "categoryId"> & { categoryName: string })[]) => {
+    try {
+      const allCategories: Category[] = await db.getCategories();
+      const categoryMap = new Map(allCategories.map(c => [c.name.toLowerCase(), c.id]));
+      let newCategoriesAdded = false;
+
+      for (const tx of transactions) {
+        let categoryId = categoryMap.get(tx.categoryName.toLowerCase());
+
+        if (!categoryId) {
+          const newCategory = { name: tx.categoryName };
+          const newId = await db.addCategory(newCategory);
+          categoryMap.set(tx.categoryName.toLowerCase(), newId as number);
+          categoryId = newId as number;
+          newCategoriesAdded = true;
+        }
+
+        await db.addTransaction({ ...tx, categoryId });
+      }
+      
+      await loadData();
+      
+      let description = `Imported ${transactions.length} transactions successfully.`;
+      if (newCategoriesAdded) {
+        description += " New categories were added as needed.";
+      }
+      
+      toast({ title: "Import Successful", description });
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to import transactions.",
+      });
+    }
+  };
+
+
   const setBudget = async (budget: Budget) => {
     try {
       await db.setBudget(budget);
@@ -250,6 +291,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     period,
     setPeriod,
     addTransaction,
+    addMultipleTransactions,
     setBudget,
     logout,
     markGoalAsComplete,

@@ -45,3 +45,18 @@ export interface AppState {
   loading: boolean;
   error: Error | null;
 }
+
+// For QR Code data structure
+export interface QrTransaction {
+    d: string; // date
+    dsc: string; // description
+    a: number; // amount
+    t: 'income' | 'expense'; // type
+    c: string; // categoryName
+}
+
+export interface QrData {
+    type: 'WalletWatcherReport';
+    version: number;
+    data: QrTransaction[];
+}
