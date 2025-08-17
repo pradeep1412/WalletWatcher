@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    // This is needed to allow the Next.js dev server to accept requests from the previewer.
+    allowedDevOrigins: ['*'],
+  },
 };
 
 export default nextConfig;
