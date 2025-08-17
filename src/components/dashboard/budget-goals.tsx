@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
 import {
   Card,
@@ -12,11 +12,13 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { SetBudgetSheet } from "./set-budget-sheet";
 
 export function BudgetGoals() {
   const { transactions, categories, budgets } = useWalletWatcher();
+  const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const budgetData = useMemo(() => {
     return categories
@@ -28,6 +30,7 @@ export function BudgetGoals() {
           .reduce((acc, t) => acc + t.amount, 0);
         const progress = budget > 0 ? (spent / budget) * 100 : 0;
         return {
+          id: category.id,
           name: category.name,
           spent,
           budget,
@@ -36,6 +39,11 @@ export function BudgetGoals() {
       })
       .filter(b => b.budget > 0);
   }, [transactions, categories, budgets]);
+
+  const handleSetBudget = (categoryId?: number) => {
+    setSelectedCategory(categoryId);
+    setIsSheetOpen(true);
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -53,12 +61,10 @@ export function BudgetGoals() {
             Tracking your spending against your set budgets.
           </CardDescription>
         </div>
-        <SetBudgetSheet>
-          <Button variant="outline" size="sm">
-            <Pencil className="mr-2 h-4 w-4" />
-            Set Budget
-          </Button>
-        </SetBudgetSheet>
+        <Button variant="outline" size="sm" onClick={() => handleSetBudget()}>
+          <Plus className="mr-2 h-4 w-4" />
+          Set Budget
+        </Button>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[250px]">
@@ -68,9 +74,14 @@ export function BudgetGoals() {
                 <div key={item.name}>
                   <div className="mb-1 flex justify-between">
                     <span className="text-sm font-medium">{item.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {formatCurrency(item.spent)} / {formatCurrency(item.budget)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {formatCurrency(item.spent)} / {formatCurrency(item.budget)}
+                      </span>
+                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSetBudget(item.id)}>
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                   <Progress value={item.progress} />
                 </div>
@@ -83,6 +94,11 @@ export function BudgetGoals() {
           </div>
         </ScrollArea>
       </CardContent>
+      <SetBudgetSheet 
+        isOpen={isSheetOpen}
+        setIsOpen={setIsSheetOpen}
+        categoryId={selectedCategory}
+      />
     </Card>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -14,7 +14,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetFooter,
   SheetClose,
 } from "@/components/ui/sheet";
@@ -41,9 +40,16 @@ const formSchema = z.object({
   amount: z.coerce.number().positive("Budget amount must be positive."),
 });
 
-export function SetBudgetSheet({ children }: { children: React.ReactNode }) {
+export function SetBudgetSheet({ 
+    isOpen,
+    setIsOpen,
+    categoryId,
+}: { 
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
+    categoryId?: number;
+}) {
   const { categories, budgets, setBudget } = useWalletWatcher();
-  const [isOpen, setIsOpen] = useState(false);
 
   const expenseCategories = categories.filter(
     (c) => c.name.toLowerCase() !== "income"
@@ -60,6 +66,12 @@ export function SetBudgetSheet({ children }: { children: React.ReactNode }) {
   const selectedCategoryId = form.watch("categoryId");
 
   useEffect(() => {
+      if(categoryId) {
+        form.setValue("categoryId", categoryId);
+      }
+  }, [categoryId, form, isOpen])
+
+  useEffect(() => {
     if (selectedCategoryId) {
       const existingBudget = budgets.find(b => b.categoryId === selectedCategoryId);
       if (existingBudget) {
@@ -73,12 +85,18 @@ export function SetBudgetSheet({ children }: { children: React.ReactNode }) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     await setBudget(values as Budget);
     setIsOpen(false);
-    form.reset();
+    form.reset({categoryId: undefined, amount: 0});
+  }
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+        form.reset({categoryId: undefined, amount: 0});
+    }
   }
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Set Budget</SheetTitle>
@@ -99,7 +117,7 @@ export function SetBudgetSheet({ children }: { children: React.ReactNode }) {
                   <FormLabel>Category</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={String(field.value)}
+                    value={String(field.value ?? '')}
                   >
                     <FormControl>
                       <SelectTrigger>
