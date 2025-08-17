@@ -59,31 +59,40 @@ class DatabaseService {
 
   private async getStore(
     storeName: string,
-    mode: IDBTransactionMode
+    mode: IDBTransactionMode,
+    transaction?: IDBTransaction
   ): Promise<IDBObjectStore> {
+    if (transaction) {
+      return transaction.objectStore(storeName);
+    }
     const db = await this.openDB();
-    const transaction = db.transaction(storeName, mode);
-    return transaction.objectStore(storeName);
+    const tx = db.transaction(storeName, mode);
+    return tx.objectStore(storeName);
   }
 
   // User methods
   async initUser(user: { username: string; country: string }): Promise<void> {
-    const store = await this.getStore(USER_STORE, "readwrite");
-    const userWithId: User = { ...user, id: 1 };
-    
-    // Add default categories
-    const defaultCategories = [
-      { name: "Groceries" }, { name: "Utilities" }, { name: "Rent/Mortgage" }, { name: "Transportation" },
-      { name: "Dining Out" }, { name: "Entertainment" }, { name: "Shopping" }, { name: "Income" }
-    ];
-    for (const cat of defaultCategories) {
-      await this.addCategory(cat);
-    }
+    const db = await this.openDB();
+    const tx = db.transaction([USER_STORE, CATEGORIES_STORE], "readwrite");
+    const userStore = tx.objectStore(USER_STORE);
+    const categoryStore = tx.objectStore(CATEGORIES_STORE);
     
     return new Promise((resolve, reject) => {
-      const request = store.put(userWithId);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+
+      // Add user
+      const userWithId: User = { ...user, id: 1 };
+      userStore.put(userWithId);
+
+      // Add default categories
+      const defaultCategories = [
+        { name: "Groceries" }, { name: "Utilities" }, { name: "Rent/Mortgage" }, { name: "Transportation" },
+        { name: "Dining Out" }, { name: "Entertainment" }, { name: "Shopping" }, { name: "Income" }
+      ];
+      for (const cat of defaultCategories) {
+        categoryStore.add(cat);
+      }
     });
   }
 
