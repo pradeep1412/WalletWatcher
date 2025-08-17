@@ -7,8 +7,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export function DashboardPeriodFilter() {
     const { period, setPeriod } = useWalletWatcher();
 
+    const handleValueChange = (value: string) => {
+        setPeriod(value as Period);
+    }
+
     return (
-        <Tabs value={period} onValueChange={(value) => setPeriod(value as Period)}>
+        <Tabs value={period} onValueChange={handleValueChange}>
             <TabsList>
                 <TabsTrigger value="week">This Week</TabsTrigger>
                 <TabsTrigger value="month">This Month</TabsTrigger>
