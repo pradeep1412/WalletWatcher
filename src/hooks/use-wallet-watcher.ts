@@ -21,6 +21,7 @@ import { useToast } from "./use-toast";
 type WalletWatcherContextType = AppState & {
   addTransaction: (transaction: Omit<Transaction, "id">) => Promise<void>;
   setBudget: (budget: Budget) => Promise<void>;
+  markGoalAsComplete: (categoryId: number) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -104,6 +105,21 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const markGoalAsComplete = async (categoryId: number) => {
+    try {
+      await db.markBudgetAsComplete(categoryId);
+      await loadData();
+      // No toast here to allow the UI to give confetti feedback
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not mark goal as complete.",
+      });
+    }
+  };
+
   const logout = async () => {
     try {
       await db.clearUserData();
@@ -119,7 +135,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const providerValue = { ...state, addTransaction, setBudget, logout };
+  const providerValue = { ...state, addTransaction, setBudget, logout, markGoalAsComplete };
 
   return (
     <AppContext.Provider value={providerValue}>

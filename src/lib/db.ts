@@ -145,12 +145,41 @@ class DatabaseService {
 
   // Budget methods
   async setBudget(budget: Budget): Promise<IDBValidKey> {
-    const store = await this.getStore(BUDGETS_STORE, "readwrite");
+    const budgetsStore = await this.getStore(BUDGETS_STORE, "readwrite");
     return new Promise((resolve, reject) => {
-        const request = store.put(budget);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
+        const getRequest = budgetsStore.get(budget.categoryId);
+        getRequest.onsuccess = () => {
+            const existingBudget = getRequest.result;
+            const newBudget = { ...(existingBudget || {}), ...budget };
+            if (!existingBudget || existingBudget.amount !== newBudget.amount) {
+                newBudget.isCompleted = false;
+            }
+
+            const putRequest = budgetsStore.put(newBudget);
+            putRequest.onsuccess = () => resolve(putRequest.result);
+            putRequest.onerror = () => reject(putRequest.error);
+        }
+        getRequest.onerror = () => reject(getRequest.error);
     });
+  }
+
+  async markBudgetAsComplete(categoryId: number): Promise<void> {
+      const store = await this.getStore(BUDGETS_STORE, 'readwrite');
+      return new Promise((resolve, reject) => {
+        const request = store.get(categoryId);
+        request.onsuccess = () => {
+          const budget = request.result;
+          if (budget) {
+            budget.isCompleted = true;
+            const updateRequest = store.put(budget);
+            updateRequest.onsuccess = () => resolve();
+            updateRequest.onerror = () => reject(updateRequest.error);
+          } else {
+            reject(new Error(`Budget with categoryId ${categoryId} not found`));
+          }
+        };
+        request.onerror = () => reject(request.error);
+      });
   }
   
   async getBudgets(): Promise<Budget[]> {

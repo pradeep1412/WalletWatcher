@@ -18,35 +18,36 @@ import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/lib/utils";
 
 export function BudgetGoals() {
-  const { transactions, categories, budgets } = useWalletWatcher();
+  const { transactions, categories, budgets, markGoalAsComplete } = useWalletWatcher();
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [completedGoals, setCompletedGoals] = useState<Set<number>>(new Set());
   const [celebratingGoal, setCelebratingGoal] = useState<number | null>(null);
 
   const budgetData = useMemo(() => {
     return categories
       .filter(c => c.name.toLowerCase() !== 'income')
       .map((category) => {
-        const budget = budgets.find((b) => b.categoryId === category.id)?.amount || 0;
+        const budget = budgets.find((b) => b.categoryId === category.id);
         const spent = transactions
           .filter((t) => t.categoryId === category.id && t.type === "expense")
           .reduce((acc, t) => acc + t.amount, 0);
-        const progress = budget > 0 ? (spent / budget) * 100 : 0;
-        const isAchieved = budget > 0 && spent <= budget;
-        const isCompleted = completedGoals.has(category.id);
+        const budgetAmount = budget?.amount || 0;
+        const progress = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0;
+        const isAchieved = budgetAmount > 0 && spent <= budgetAmount;
+        const isCompleted = budget?.isCompleted || false;
+
         return {
           id: category.id,
           name: category.name,
           spent,
-          budget,
+          budget: budgetAmount,
           progress,
           isAchieved,
           isCompleted,
         };
       })
       .filter(b => b.budget > 0);
-  }, [transactions, categories, budgets, completedGoals]);
+  }, [transactions, categories, budgets]);
 
   useEffect(() => {
       if(celebratingGoal !== null) {
@@ -60,8 +61,8 @@ export function BudgetGoals() {
     setIsSheetOpen(true);
   };
   
-  const handleMarkComplete = (categoryId: number) => {
-      setCompletedGoals(prev => new Set(prev).add(categoryId));
+  const handleMarkComplete = async (categoryId: number) => {
+      await markGoalAsComplete(categoryId);
       setCelebratingGoal(categoryId);
   }
 

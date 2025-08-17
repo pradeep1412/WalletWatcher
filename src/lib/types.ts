@@ -21,6 +21,7 @@ export interface Transaction {
 export interface Budget {
   categoryId: number;
   amount: number;
+  isCompleted?: boolean;
 }
 
 export interface AppState {
