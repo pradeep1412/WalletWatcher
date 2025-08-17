@@ -239,7 +239,7 @@ class DatabaseService {
   async addSavingsGoal(goal: Omit<SavingsGoal, "id" | "currentAmount">): Promise<void> {
     const store = await this.getStore(SAVINGS_GOALS_STORE, "readwrite");
     return new Promise((resolve, reject) => {
-        const request = store.add({ ...goal, currentAmount: 0 });
+        const request = store.add({ ...goal, currentAmount: 0, isCompleted: false });
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
     });
@@ -265,6 +265,29 @@ class DatabaseService {
             const updateRequest = store.put(goal);
             updateRequest.onsuccess = () => resolve();
             updateRequest.onerror = () => reject(updateRequest.error);
+          } else {
+            reject(new Error(`Savings goal with id ${goalId} not found`));
+          }
+        };
+        request.onerror = () => reject(request.error);
+      });
+  }
+  
+  async markSavingsGoalAsComplete(goalId: number): Promise<void> {
+      const store = await this.getStore(SAVINGS_GOALS_STORE, 'readwrite');
+      return new Promise((resolve, reject) => {
+        const request = store.get(goalId);
+        request.onsuccess = () => {
+          const goal = request.result;
+          if (goal) {
+            if (goal.recurrence === 'one-time') {
+                goal.isCompleted = true;
+                const updateRequest = store.put(goal);
+                updateRequest.onsuccess = () => resolve();
+                updateRequest.onerror = () => reject(updateRequest.error);
+            } else {
+                resolve();
+            }
           } else {
             reject(new Error(`Savings goal with id ${goalId} not found`));
           }

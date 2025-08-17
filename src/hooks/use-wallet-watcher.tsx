@@ -30,6 +30,7 @@ type WalletWatcherContextType = AppState & {
   markGoalAsComplete: (categoryId: number) => Promise<void>;
   addSavingsGoal: (goal: Omit<SavingsGoal, "id" | "currentAmount">) => Promise<void>;
   addFundsToSavingsGoal: (goalId: number, amount: number) => Promise<void>;
+  markSavingsGoalAsComplete: (goalId: number) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -47,7 +48,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     loading: true,
     error: null,
   });
-  const [period, setPeriod] = useState<Period>('week');
+  const [period, setPeriod] = useState<Period>('month');
 
   const loadData = useCallback(async () => {
     setState((s) => ({ ...s, loading: true }));
@@ -108,7 +109,10 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
             case 'year':
                 return { start: startOfYear, end: new Date() };
             default:
-                return { start: startOfWeek, end: new Date() };
+                const defaultStartOfWeek = new Date();
+                defaultStartOfWeek.setDate(defaultStartOfWeek.getDate() - defaultStartOfWeek.getDay());
+                defaultStartOfWeek.setHours(0, 0, 0, 0);
+                return { start: defaultStartOfWeek, end: new Date() };
         }
     };
 
@@ -194,6 +198,20 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const markSavingsGoalAsComplete = async (goalId: number) => {
+    try {
+      await db.markSavingsGoalAsComplete(goalId);
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not mark savings goal as complete.",
+      });
+    }
+  };
+
 
   const logout = async () => {
     try {
@@ -221,6 +239,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     markGoalAsComplete,
     addSavingsGoal,
     addFundsToSavingsGoal,
+    markSavingsGoalAsComplete,
   };
 
   return (

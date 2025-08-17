@@ -193,14 +193,27 @@ function SavingsGoalSkeleton() {
 }
 
 function SavingsGoalsTab() {
-  const { savingsGoals, loading } = useWalletWatcher();
+  const { savingsGoals, markSavingsGoalAsComplete, loading } = useWalletWatcher();
   const [isAddGoalSheetOpen, setIsAddGoalSheetOpen] = useState(false);
   const [isAddFundsSheetOpen, setIsAddFundsSheetOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | undefined>(undefined);
+  const [celebratingGoal, setCelebratingGoal] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (celebratingGoal !== null) {
+      const timer = setTimeout(() => setCelebratingGoal(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [celebratingGoal]);
 
   const handleAddFunds = (goal: SavingsGoal) => {
     setSelectedGoal(goal);
     setIsAddFundsSheetOpen(true);
+  }
+  
+  const handleMarkComplete = async (goalId: number) => {
+    await markSavingsGoalAsComplete(goalId);
+    setCelebratingGoal(goalId);
   }
   
   const formatCurrency = (amount: number) => {
@@ -223,6 +236,7 @@ function SavingsGoalsTab() {
 
   return (
     <>
+      {celebratingGoal !== null && <Confetti />}
       <div className="flex items-center justify-between pb-4">
          <CardDescription>
             Track your progress towards your financial targets.
@@ -237,24 +251,43 @@ function SavingsGoalsTab() {
             {savingsGoals.length > 0 ? (
               savingsGoals.map((goal) => {
                 const progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
+                const isAchieved = goal.currentAmount >= goal.targetAmount;
                 return (
                     <div key={goal.id}>
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">{goal.name}</span>
-                                {goal.recurrence && <Badge variant="secondary" className="text-xs">{capitalize(goal.recurrence)}</Badge>}
-                                {progress >= 100 && <Target className="h-4 w-4 text-green-500" />}
+                                {goal.isCompleted && goal.recurrence === 'one-time' ? (
+                                    <div className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5">
+                                        <Trophy className="h-3 w-3 text-accent" />
+                                        <span className="text-xs font-semibold text-accent">Goal Achieved!</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {goal.recurrence && <Badge variant="secondary" className="text-xs">{capitalize(goal.recurrence)}</Badge>}
+                                        {isAchieved && <Target className="h-4 w-4 text-green-500" />}
+                                    </>
+                                )}
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-muted-foreground">
                                     {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
                                 </span>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddFunds(goal)}>
-                                    <Plus className="h-4 w-4" />
-                                </Button>
+                                {isAchieved && !goal.isCompleted && goal.recurrence === 'one-time' ? (
+                                    <Button size="sm" variant="outline" onClick={() => handleMarkComplete(goal.id)}>
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        Mark as Complete
+                                    </Button>
+                                ) : (
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddFunds(goal)}>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                )}
                             </div>
                         </div>
-                        <Progress value={progress} />
+                        <Progress value={progress} className={cn({
+                          "[&>div]:bg-accent": (goal.isCompleted && goal.recurrence === 'one-time') || isAchieved,
+                        })}/>
                     </div>
                 )
               })
