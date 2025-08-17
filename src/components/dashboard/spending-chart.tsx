@@ -8,22 +8,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ChartContainer,
-} from "@/components/ui/chart";
-import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { ChartContainer } from "@/components/ui/chart";
+import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
 
 export function SpendingChart() {
-  const { transactions, categories } = useWalletWatcher();
+  const { transactions, categories, user } = useWalletWatcher();
 
   const chartData = useMemo(() => {
     const expenseData: { [key: string]: number } = {};
     transactions
       .filter((t) => t.type === "expense")
       .forEach((t) => {
-        const categoryName = categories.find((c) => c.id === t.categoryId)?.name || "Uncategorized";
-        expenseData[categoryName] = (expenseData[categoryName] || 0) + t.amount;
+        const categoryName =
+          categories.find((c) => c.id === t.categoryId)?.name ||
+          "Uncategorized";
+        expenseData[categoryName] =
+          (expenseData[categoryName] || 0) + t.amount;
       });
 
     return Object.entries(expenseData).map(([name, value]) => ({
@@ -31,14 +32,48 @@ export function SpendingChart() {
       value,
     }));
   }, [transactions, categories]);
-  
-  const COLORS = ["#1EA8F9", "#30D5C8", "#FFC300", "#FF5733", "#C70039", "#900C3F"];
-  
+
+  const COLORS = [
+    "hsl(var(--chart-1))",
+    "hsl(var(--chart-2))",
+    "hsl(var(--chart-3))",
+    "hsl(var(--chart-4))",
+    "hsl(var(--chart-5))",
+  ];
+
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat(user?.country ? `en-${user.country}` : 'en-US', {
       style: "currency",
-      currency: "USD",
+      currency: "USD", // This should ideally be dynamic based on user settings
     }).format(amount);
+  };
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="rounded-lg border bg-background p-2 shadow-sm">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col">
+              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                Category
+              </span>
+              <span className="font-bold text-foreground">
+                {payload[0].name}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                Amount
+              </span>
+              <span className="font-bold">
+                {formatCurrency(payload[0].value)}
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -58,51 +93,52 @@ export function SpendingChart() {
                 cx={125}
                 cy={125}
                 innerRadius={60}
-                outerRadius={80}
+                outerRadius={100}
                 fill="#8884d8"
                 paddingAngle={5}
                 dataKey="value"
                 nameKey="name"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                labelLine={false}
+                label={({
+                  cx,
+                  cy,
+                  midAngle,
+                  innerRadius,
+                  outerRadius,
+                  percent,
+                }) => {
+                  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                  const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                  const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      fill="white"
+                      textAnchor={x > cx ? "start" : "end"}
+                      dominantBaseline="central"
+                      className="text-xs font-bold"
+                    >
+                      {`${(percent * 100).toFixed(0)}%`}
+                    </text>
+                  );
+                }}
               >
                 {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div className="rounded-lg border bg-background p-2 shadow-sm">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="flex flex-col">
-                            <span className="text-[0.70rem] uppercase text-muted-foreground">
-                              Category
-                            </span>
-                            <span className="font-bold text-muted-foreground">
-                              {payload[0].name}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[0.70rem] uppercase text-muted-foreground">
-                              Amount
-                            </span>
-                            <span className="font-bold">
-                              {formatCurrency(payload[0].value as number)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Legend />
             </PieChart>
           ) : (
             <div className="flex h-full items-center justify-center">
-                <p className="text-muted-foreground">No expense data to display.</p>
+              <p className="text-muted-foreground">
+                No expense data to display.
+              </p>
             </div>
           )}
         </ChartContainer>
