@@ -20,7 +20,9 @@ export function QrScanner({ onScanSuccess }: { onScanSuccess: () => void }) {
   useEffect(() => {
     const checkCameraPermission = async () => {
       try {
+        // Just requesting the stream is enough to check for permission
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        // Stop all tracks immediately to release the camera
         stream.getTracks().forEach(track => track.stop());
         setHasPermission(true);
       } catch (err) {
@@ -32,74 +34,81 @@ export function QrScanner({ onScanSuccess }: { onScanSuccess: () => void }) {
   }, []);
 
   useEffect(() => {
-    if (hasPermission === null || !hasPermission || scannerRef.current) {
-      return;
+    // Only run this effect if permission has been granted and the scanner isn't already initialized.
+    if (hasPermission === true && !scannerRef.current) {
+        const onScanSuccessCallback: QrCodeSuccessCallback = async (decodedText, decodedResult) => {
+            if (isProcessing) return;
+    
+            setIsProcessing(true);
+            scannerRef.current?.pause();
+          
+            try {
+              const parsedData: QrData = JSON.parse(decodedText);
+          
+              if (parsedData.type !== 'WalletWatcherReport' || !parsedData.data) {
+                throw new Error("Invalid QR code format.");
+              }
+    
+              const transactionsToImport = parsedData.data.map((tx: QrTransaction) => ({
+                date: tx.d,
+                description: tx.dsc,
+                amount: tx.a,
+                type: tx.t,
+                categoryName: tx.c,
+              }));
+    
+              await addMultipleTransactions(transactionsToImport);
+              toast({
+                  title: "Import Complete",
+                  description: `${transactionsToImport.length} transactions have been added.`
+              });
+              onScanSuccess();
+    
+            } catch (error) {
+              console.error("QR Scan Error:", error);
+              toast({
+                variant: "destructive",
+                title: "Scan Failed",
+                description: error instanceof Error ? error.message : "Could not read QR code.",
+              });
+              scannerRef.current?.resume();
+            } finally {
+              setIsProcessing(false);
+            }
+        };
+
+        const onScanFailureCallback = (error: Html5QrcodeError) => {
+            // This callback is called frequently, so we intentionally do nothing here
+            // to avoid spamming the console or showing unnecessary alerts.
+        };
+
+        const qrScanner = new Html5QrcodeScanner(
+            scannerRegionId,
+            { fps: 10, qrbox: { width: 250, height: 250 }, supportedScanTypes: [] },
+            false // verbose
+        );
+
+        qrScanner.render(onScanSuccessCallback, onScanFailureCallback);
+        scannerRef.current = qrScanner;
     }
 
-    const onScanSuccessCallback: QrCodeSuccessCallback = async (decodedText, decodedResult) => {
-        if (isProcessing) return;
-
-        scannerRef.current?.pause();
-        setIsProcessing(true);
-      
-        try {
-          const parsedData: QrData = JSON.parse(decodedText);
-      
-          if (parsedData.type !== 'WalletWatcherReport' || !parsedData.data) {
-            throw new Error("Invalid QR code format.");
-          }
-
-          const transactionsToImport = parsedData.data.map((tx: QrTransaction) => ({
-            date: tx.d,
-            description: tx.dsc,
-            amount: tx.a,
-            type: tx.t,
-            categoryName: tx.c,
-          }));
-
-          await addMultipleTransactions(transactionsToImport);
-          onScanSuccess();
-
-        } catch (error) {
-          console.error("QR Scan Error:", error);
-          toast({
-            variant: "destructive",
-            title: "Scan Failed",
-            description: error instanceof Error ? error.message : "Could not read QR code.",
-          });
-          scannerRef.current?.resume();
-        } finally {
-          setIsProcessing(false);
-        }
-      };
-
-    const onScanFailureCallback = (error: Html5QrcodeError) => {
-        // This is called frequently, so we don't want to show a toast here.
-        // console.warn(`QR error = ${error}`);
-    };
-
-    const qrScanner = new Html5QrcodeScanner(
-      scannerRegionId,
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      false // verbose
-    );
-
-    qrScanner.render(onScanSuccessCallback, onScanFailureCallback);
-    scannerRef.current = qrScanner;
-
+    // Cleanup function to clear the scanner when the component unmounts
     return () => {
-      scannerRef.current?.clear().catch(error => {
-        console.error("Failed to clear html5-qrcode-scanner.", error);
-      });
-      scannerRef.current = null;
+      if (scannerRef.current) {
+          scannerRef.current.clear().catch(error => {
+              console.error("Failed to clear html5-qrcode-scanner.", error);
+          });
+          scannerRef.current = null;
+      }
     };
   }, [hasPermission, addMultipleTransactions, onScanSuccess, toast, isProcessing]);
 
   return (
-    <div className="pt-4 space-y-4">
+    <div className="pt-4 space-y-4 relative">
       {hasPermission === null && (
-         <div className="flex items-center justify-center h-48">
+         <div className="flex flex-col items-center justify-center h-48">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="mt-2 text-muted-foreground">Checking camera permission...</p>
          </div>
       )}
        {hasPermission === false && (
@@ -111,13 +120,15 @@ export function QrScanner({ onScanSuccess }: { onScanSuccess: () => void }) {
           </AlertDescription>
         </Alert>
       )}
+      {hasPermission === true && (
+          <div id={scannerRegionId} className="w-full" />
+      )}
        {isProcessing && (
-        <div className="absolute inset-0 bg-background/80 flex flex-col items-center justify-center z-10">
+        <div className="absolute inset-0 bg-background/80 flex flex-col items-center justify-center z-10 rounded-lg">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="mt-4 text-muted-foreground">Processing report...</p>
         </div>
       )}
-      <div id={scannerRegionId} className="w-full" />
     </div>
   );
 }

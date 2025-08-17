@@ -57,9 +57,8 @@ export function ShareReportDialog({
           {qrData ? (
              <QRCode
                 value={qrData}
-                size={220} // Adjusted size for better scannability
-                level={"L"} // Level L is best for dense data
-                includeMargin={true} // Adds a quiet zone
+                size={256}
+                level={"L"}
                 className="h-auto max-w-full"
             />
           ) : (
