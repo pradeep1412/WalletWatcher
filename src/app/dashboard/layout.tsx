@@ -6,8 +6,6 @@ import {
   Settings,
   LogOut,
   Loader2,
-  LayoutGrid,
-  List,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,7 +26,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-function NavLink({ href, children, icon: Icon }: { href: string; children: React.ReactNode; icon: React.ElementType }) {
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = pathname === href;
 
@@ -36,13 +34,12 @@ function NavLink({ href, children, icon: Icon }: { href: string; children: React
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+        "rounded-md px-3 py-2 text-sm font-medium transition-colors",
         isActive
           ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       )}
     >
-      <Icon className="h-4 w-4" />
       {children}
     </Link>
   );
@@ -69,8 +66,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
             <span className="hidden sm:inline-block">Wallet Watcher</span>
           </Link>
           <nav className="hidden items-center gap-4 md:flex">
-             <NavLink href="/dashboard" icon={LayoutGrid}>Dashboard</NavLink>
-             <NavLink href="/dashboard/transactions" icon={List}>Transactions</NavLink>
+             <NavLink href="/dashboard">Dashboard</NavLink>
+             <NavLink href="/dashboard/transactions">Transactions</NavLink>
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -97,13 +94,11 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                <div className="md:hidden">
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard" className="w-full">
-                      <LayoutGrid className="mr-2 h-4 w-4" />
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                      <Link href="/dashboard/transactions" className="w-full">
-                      <List className="mr-2 h-4 w-4" />
                       Transactions
                     </Link>
                   </DropdownMenuItem>
