@@ -94,7 +94,7 @@ export function BudgetGoals() {
             {budgetData.length > 0 ? (
               budgetData.map((item) => (
                 <div key={item.name} className="group">
-                  <div className="mb-1 flex justify-between">
+                  <div className="mb-1 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{item.name}</span>
                        {item.isCompleted && (
@@ -108,22 +108,23 @@ export function BudgetGoals() {
                       <span className="text-sm text-muted-foreground">
                         {formatCurrency(item.spent)} / {formatCurrency(item.budget)}
                       </span>
-                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSetBudget(item.id)}>
-                        <Pencil className="h-3 w-3" />
-                      </Button>
+                      {item.isAchieved && !item.isCompleted ? (
+                        <div className="opacity-0 transition-opacity group-hover:opacity-100">
+                          <Button size="sm" variant="outline" onClick={() => handleMarkComplete(item.id)}>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Mark as Complete
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSetBudget(item.id)}>
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <Progress value={item.progress} className={cn({
                     "[&>div]:bg-accent": item.isCompleted,
                   })}/>
-                  {item.isAchieved && !item.isCompleted && (
-                      <div className="mt-2 text-right opacity-0 transition-opacity group-hover:opacity-100">
-                          <Button size="sm" variant="outline" onClick={() => handleMarkComplete(item.id)}>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                              Mark as Complete
-                          </Button>
-                      </div>
-                  )}
                 </div>
               ))
             ) : (
