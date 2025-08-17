@@ -51,7 +51,7 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <TransactionsList />
+      <TransactionsList limit={5} />
     </div>
   );
 }

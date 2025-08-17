@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -17,9 +18,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
-export function TransactionsList() {
+export function TransactionsList({ limit }: { limit?: number }) {
   const { transactions, categories, user } = useWalletWatcher();
   
   const formatCurrency = (amount: number) => {
@@ -28,13 +32,15 @@ export function TransactionsList() {
       currency: "USD",
     }).format(amount);
   };
+  
+  const displayedTransactions = limit ? transactions.slice(0, limit) : transactions;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Transactions</CardTitle>
+        <CardTitle>Recent Transactions</CardTitle>
         <CardDescription>
-          A complete history of your income and expenses.
+          Your most recent income and expenses.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -48,8 +54,8 @@ export function TransactionsList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.length > 0 ? (
-              transactions.map((tx) => (
+            {displayedTransactions.length > 0 ? (
+              displayedTransactions.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell>
                     <div className="font-medium">{tx.description}</div>
@@ -65,7 +71,7 @@ export function TransactionsList() {
                   </TableCell>
                   <TableCell
                     className={`text-right font-medium ${
-                      tx.type === "income" ? "text-green-500" : "text-red-500"
+                      tx.type === "income" ? "text-green-500" : ""
                     }`}
                   >
                     {tx.type === "income" ? "+" : "-"}
@@ -83,6 +89,16 @@ export function TransactionsList() {
           </TableBody>
         </Table>
       </CardContent>
+      {limit && transactions.length > limit && (
+        <CardFooter className="justify-end">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/dashboard/transactions">
+                View All
+                <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }
