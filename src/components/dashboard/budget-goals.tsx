@@ -27,7 +27,7 @@ export function BudgetGoals() {
   const budgetData = useMemo(() => {
     return budgets
       .map((budget) => {
-        const category = categories.find((c) => c.categoryId === budget.categoryId);
+        const category = categories.find((c) => c.id === budget.categoryId);
         if (!category) return null;
 
         const spent = (filteredTransactions || [])
@@ -105,7 +105,7 @@ export function BudgetGoals() {
         <ScrollArea className="h-[250px]">
           <div className="space-y-4">
             {budgetData.length > 0 ? (
-              budgetData.map((item) => (
+              budgetData.map((item) => item && (
                 <div key={item.id}>
                   <div className="mb-1 flex items-center justify-between">
                     <div className="flex items-center gap-2">
