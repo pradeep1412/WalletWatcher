@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher.tsx";
 
 export function SpendingChart() {
@@ -24,7 +24,7 @@ export function SpendingChart() {
           categories.find((c) => c.id === t.categoryId)?.name ||
           "Uncategorized";
         expenseData[categoryName] =
-          (expenseData[categoryName] || 0) + t.amount;
+          (expenseData[categoryName] || 0) + Math.abs(t.amount);
       });
 
     return Object.entries(expenseData).map(([name, value]) => ({
@@ -33,16 +33,6 @@ export function SpendingChart() {
     }));
   }, [transactions, categories]);
 
-  console.log("chartData:", chartData);
-
-  const COLORS = [
-    "hsl(var(--chart-1))",
-    "hsl(var(--chart-2))",
-    "hsl(var(--chart-3))",
-    "hsl(var(--chart-4))",
-    "hsl(var(--chart-5))",
-  ];
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(user?.country ? `en-${user.country}` : 'en-US', {
       style: "currency",
@@ -50,7 +40,7 @@ export function SpendingChart() {
     }).format(amount);
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border bg-background p-2 shadow-sm">
@@ -60,7 +50,7 @@ export function SpendingChart() {
                 Category
               </span>
               <span className="font-bold text-foreground">
-                {payload[0].name}
+                {label}
               </span>
             </div>
             <div className="flex flex-col">
@@ -87,56 +77,17 @@ export function SpendingChart() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={{}} className="mx-auto aspect-square h-[250px]">
+        <ChartContainer config={{}} className="mx-auto aspect-video h-[250px]">
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    paddingAngle={5}
-                    dataKey="value"
-                    nameKey="name"
-                    labelLine={false}
-                    label={({
-                    cx,
-                    cy,
-                    midAngle,
-                    innerRadius,
-                    outerRadius,
-                    percent,
-                    }) => {
-                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                    return (
-                        <text
-                        x={x}
-                        y={y}
-                        fill="white"
-                        textAnchor={x > cx ? "start" : "end"}
-                        dominantBaseline="central"
-                        className="text-xs font-bold"
-                        >
-                        {`${(percent * 100).toFixed(0)}%`}
-                        </text>
-                    );
-                    }}
-                >
-                    {chartData.map((entry, index) => (
-                    <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                    />
-                    ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
+              <BarChart data={chartData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} angle={-45} textAnchor="end" height={60} />
+                <YAxis tickFormatter={(value) => formatCurrency(Number(value))} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))' }}/>
                 <Legend />
-                </PieChart>
+                <Bar dataKey="value" fill="hsl(var(--chart-1))" name="Spent" />
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <div className="flex h-full items-center justify-center">
