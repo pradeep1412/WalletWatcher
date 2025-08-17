@@ -24,6 +24,8 @@ export interface Budget {
   isCompleted?: boolean;
 }
 
+export type Period = 'week' | 'month' | 'year';
+
 export interface AppState {
   user: User | null;
   transactions: Transaction[];

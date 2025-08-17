@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -9,40 +8,30 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ChartContainer } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { useWalletWatcher } from "@/hooks/use-wallet-watcher.tsx";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
-
-type Period = "daily" | "monthly" | "yearly";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
+import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
+import { chartColors } from "@/lib/chart-colors";
 
 export function SpendingChart() {
-  const { transactions, user } = useWalletWatcher();
-  const [period, setPeriod] = useState<Period>("monthly");
+  const { filteredTransactions, categories, user } = useWalletWatcher();
 
   const chartData = useMemo(() => {
-    const expenseData: { [key: string]: number } = {};
-    const expenseTransactions = transactions.filter((t) => t.type === "expense");
+    const categorySpending = new Map<string, number>();
 
-    expenseTransactions.forEach((t) => {
-      const date = new Date(t.date);
-      let key = "";
-      if (period === "daily") {
-        key = format(date, "yyyy-MM-dd");
-      } else if (period === "monthly") {
-        key = format(date, "yyyy-MM");
-      } else {
-        key = format(date, "yyyy");
-      }
-      expenseData[key] = (expenseData[key] || 0) + Math.abs(t.amount);
-    });
+    filteredTransactions
+      .filter((t) => t.type === "expense")
+      .forEach((t) => {
+        const categoryName = categories.find(c => c.id === t.categoryId)?.name || 'Uncategorized';
+        const currentAmount = categorySpending.get(categoryName) || 0;
+        categorySpending.set(categoryName, currentAmount + Math.abs(t.amount));
+      });
+    
+    return Array.from(categorySpending.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a,b) => b.value - a.value);
 
-    return Object.entries(expenseData)
-      .map(([date, value]) => ({ date, value }))
-      .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  }, [transactions, period]);
+  }, [filteredTransactions, categories]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(user?.country ? `en-${user.country}` : 'en-US', {
@@ -50,76 +39,54 @@ export function SpendingChart() {
       currency: "USD",
     }).format(amount);
   };
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      let formattedLabel = label;
-      if (period === "monthly") {
-        formattedLabel = format(new Date(label), "MMMM yyyy");
-      } else if (period === "daily") {
-        formattedLabel = format(new Date(label), "PPP");
-      }
-
-      return (
-        <div className="rounded-lg border bg-background p-2 shadow-sm">
-          <div className="grid grid-cols-1 gap-2">
-            <div className="flex flex-col">
-              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                {period.charAt(0).toUpperCase() + period.slice(1)}
-              </span>
-              <span className="font-bold text-foreground">
-                {formattedLabel}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                Total Spent
-              </span>
-              <span className="font-bold">
-                {formatCurrency(payload[0].value)}
-              </span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
   
-  const XAxisTickFormatter = (value: string) => {
-      if (period === 'monthly') return format(new Date(value), 'MMM');
-      if (period === 'daily') return format(new Date(value), 'd');
-      return value;
-  }
-
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-start justify-between">
-            <div>
-                <CardTitle>Spending Over Time</CardTitle>
-                <CardDescription>
-                A look at your spending trends.
-                </CardDescription>
-            </div>
-            <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
-                <TabsList>
-                    <TabsTrigger value="daily">Day</TabsTrigger>
-                    <TabsTrigger value="monthly">Month</TabsTrigger>
-                    <TabsTrigger value="yearly">Year</TabsTrigger>
-                </TabsList>
-            </Tabs>
-        </div>
+        <CardTitle>Spending by Category</CardTitle>
+        <CardDescription>
+          Your top spending categories for the selected period.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={{}} className="mx-auto aspect-video h-[250px]">
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <XAxis dataKey="date" tickFormatter={XAxisTickFormatter} />
-                <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
+              <BarChart data={chartData} layout="vertical">
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+                  yAxisId={0}
+                />
+                 <YAxis
+                  orientation="right"
+                  dataKey="value"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(value) => formatCurrency(value)}
+                  tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+                  mirror
+                  yAxisId={1}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) => formatCurrency(Number(value))}
+                      hideLabel
+                    />
+                  }
+                />
+                <Bar dataKey="value" layout="vertical" radius={5}>
+                    {chartData.map((_entry, index) => (
+                        <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                    ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -134,4 +101,3 @@ export function SpendingChart() {
     </Card>
   );
 }
-

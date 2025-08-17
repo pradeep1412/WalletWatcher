@@ -9,6 +9,7 @@ import { AddTransactionSheet } from "@/components/dashboard/add-transaction-shee
 import { ImportSheet } from "@/components/dashboard/import-sheet";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Upload } from "lucide-react";
+import { DashboardPeriodFilter } from "@/components/dashboard/dashboard-period-filter";
 
 export default function DashboardPage() {
   const { user } = useWalletWatcher();
@@ -24,7 +25,8 @@ export default function DashboardPage() {
             Here's a snapshot of your financial health.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+           <DashboardPeriodFilter />
           <ImportSheet>
             <Button variant="outline">
               <Upload className="mr-2 h-4 w-4" />

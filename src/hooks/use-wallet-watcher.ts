@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -8,6 +7,7 @@ import {
   useEffect,
   ReactNode,
   useCallback,
+  useMemo,
 } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/db";
@@ -15,10 +15,16 @@ import {
   type AppState,
   type Transaction,
   type Budget,
+  type Period,
 } from "@/lib/types";
 import { useToast } from "./use-toast";
+import { startOfWeek, startOfMonth, startOfYear, isWithinInterval } from 'date-fns';
+
 
 type WalletWatcherContextType = AppState & {
+  filteredTransactions: Transaction[];
+  period: Period;
+  setPeriod: (period: Period) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => Promise<void>;
   setBudget: (budget: Budget) => Promise<void>;
   markGoalAsComplete: (categoryId: number) => Promise<void>;
@@ -38,6 +44,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     loading: true,
     error: null,
   });
+  const [period, setPeriod] = useState<Period>('month');
 
   const loadData = useCallback(async () => {
     setState((s) => ({ ...s, loading: true }));
@@ -74,11 +81,26 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     loadData();
   }, [loadData]);
+  
+  const filteredTransactions = useMemo(() => {
+    const now = new Date();
+    let startDate: Date;
+
+    if (period === 'week') {
+      startDate = startOfWeek(now);
+    } else if (period === 'month') {
+      startDate = startOfMonth(now);
+    } else { // year
+      startDate = startOfYear(now);
+    }
+    
+    return state.transactions.filter(t => isWithinInterval(new Date(t.date), { start: startDate, end: now }));
+  }, [state.transactions, period]);
 
   const addTransaction = async (transaction: Omit<Transaction, "id">) => {
     try {
       await db.addTransaction(transaction);
-      await loadData(); // Reload all data to reflect changes
+      await loadData();
       toast({ title: "Success", description: "Transaction added." });
     } catch (error) {
       console.error(error);
@@ -109,7 +131,6 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     try {
       await db.markBudgetAsComplete(categoryId);
       await loadData();
-      // No toast here to allow the UI to give confetti feedback
     } catch (error) {
       console.error(error);
       toast({
@@ -135,7 +156,16 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const providerValue = { ...state, addTransaction, setBudget, logout, markGoalAsComplete };
+  const providerValue: WalletWatcherContextType = {
+    ...state,
+    filteredTransactions,
+    period,
+    setPeriod,
+    addTransaction,
+    setBudget,
+    logout,
+    markGoalAsComplete,
+  };
 
   return (
     <AppContext.Provider value={providerValue}>

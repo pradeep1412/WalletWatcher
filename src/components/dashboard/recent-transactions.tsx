@@ -24,7 +24,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 export function TransactionsList({ limit }: { limit?: number }) {
-  const { transactions, categories, user } = useWalletWatcher();
+  const { filteredTransactions, categories, user } = useWalletWatcher();
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(user?.country ? `en-${user.country}` : 'en-US', {
@@ -33,14 +33,14 @@ export function TransactionsList({ limit }: { limit?: number }) {
     }).format(amount);
   };
   
-  const displayedTransactions = limit ? transactions.slice(0, limit) : transactions;
+  const displayedTransactions = limit ? filteredTransactions.slice(0, limit) : filteredTransactions;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recent Transactions</CardTitle>
         <CardDescription>
-          Your most recent income and expenses.
+          Your most recent income and expenses for the selected period.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -82,14 +82,14 @@ export function TransactionsList({ limit }: { limit?: number }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
-                  No transactions yet.
+                  No transactions yet for this period.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </CardContent>
-      {limit && transactions.length > limit && (
+      {limit && filteredTransactions.length > limit && (
         <CardFooter className="justify-end">
           <Button asChild variant="ghost" size="sm">
             <Link href="/dashboard/transactions">

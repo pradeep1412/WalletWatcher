@@ -6,12 +6,12 @@ import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function OverviewCards() {
-  const { transactions, user } = useWalletWatcher();
+  const { filteredTransactions, user } = useWalletWatcher();
 
   const { income, expenses, balance } = useMemo(() => {
     let income = 0;
     let expenses = 0;
-    transactions.forEach((t) => {
+    filteredTransactions.forEach((t) => {
       const amount = Math.abs(t.amount);
       if (t.type === "income") {
         income += amount;
@@ -20,7 +20,7 @@ export function OverviewCards() {
       }
     });
     return { income, expenses, balance: income - expenses };
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(user?.country ? `en-${user.country}` : 'en-US', {
@@ -39,7 +39,7 @@ export function OverviewCards() {
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(income)}</div>
           <p className="text-xs text-muted-foreground">
-            All income transactions
+            For the selected period
           </p>
         </CardContent>
       </Card>
@@ -51,7 +51,7 @@ export function OverviewCards() {
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(expenses)}</div>
           <p className="text-xs text-muted-foreground">
-            All expense transactions
+            For the selected period
           </p>
         </CardContent>
       </Card>
@@ -63,7 +63,7 @@ export function OverviewCards() {
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(balance)}</div>
           <p className="text-xs text-muted-foreground">
-            Your current financial standing
+            For the selected period
           </p>
         </CardContent>
       </Card>

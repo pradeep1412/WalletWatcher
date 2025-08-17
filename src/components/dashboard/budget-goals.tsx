@@ -18,7 +18,7 @@ import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/lib/utils";
 
 export function BudgetGoals() {
-  const { transactions, categories, budgets, markGoalAsComplete } = useWalletWatcher();
+  const { filteredTransactions, categories, budgets, markGoalAsComplete } = useWalletWatcher();
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [celebratingGoal, setCelebratingGoal] = useState<number | null>(null);
@@ -28,7 +28,7 @@ export function BudgetGoals() {
       .filter(c => c.name.toLowerCase() !== 'income')
       .map((category) => {
         const budget = budgets.find((b) => b.categoryId === category.id);
-        const spent = transactions
+        const spent = filteredTransactions
           .filter((t) => t.categoryId === category.id && t.type === "expense")
           .reduce((acc, t) => acc + t.amount, 0);
         const budgetAmount = budget?.amount || 0;
@@ -47,7 +47,7 @@ export function BudgetGoals() {
         };
       })
       .filter(b => b.budget > 0);
-  }, [transactions, categories, budgets]);
+  }, [filteredTransactions, categories, budgets]);
 
   useEffect(() => {
       if(celebratingGoal !== null) {
@@ -80,7 +80,7 @@ export function BudgetGoals() {
         <div>
           <CardTitle>Budget Goals</CardTitle>
           <CardDescription>
-            Tracking your spending against your set budgets.
+            Your monthly budget goals.
           </CardDescription>
         </div>
         <Button variant="outline" size="sm" onClick={() => handleSetBudget()}>
@@ -121,7 +121,7 @@ export function BudgetGoals() {
                     </div>
                   </div>
                   <Progress value={item.progress} className={cn({
-                    "[&>div]:bg-accent": item.isCompleted,
+                    "[&>div]:bg-accent": item.isCompleted || item.isAchieved,
                   })}/>
                 </div>
               ))
