@@ -83,7 +83,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
   }, [loadData]);
   
   const filteredTransactions = useMemo(() => {
-    if (state.loading) return [];
+    if (state.loading || !state.transactions) return [];
     const now = new Date();
     let startDate: Date;
 
