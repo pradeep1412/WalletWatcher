@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus, Trophy, CheckCircle, PiggyBank, Target } from "lucide-react";
+import { Pencil, Plus, Trophy, CheckCircle, PiggyBank, Target, EllipsisVertical } from "lucide-react";
 import { SetBudgetSheet } from "./set-budget-sheet";
 import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddSavingsGoalSheet } from "./add-savings-goal-sheet";
 import { AddFundsSheet } from "./add-funds-sheet";
 import { type SavingsGoal } from "@/lib/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function BudgetGoalSkeleton() {
     return (
@@ -193,18 +199,20 @@ function SavingsGoalSkeleton() {
 }
 
 function SavingsGoalsTab() {
-  const { savingsGoals, markSavingsGoalAsComplete, loading } = useWalletWatcher();
+  const { savingsGoals, markSavingsGoalAsComplete, loading, addFundsToSavingsGoal } = useWalletWatcher();
   const [isAddGoalSheetOpen, setIsAddGoalSheetOpen] = useState(false);
   const [isAddFundsSheetOpen, setIsAddFundsSheetOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | undefined>(undefined);
   const [celebratingGoal, setCelebratingGoal] = useState<number | null>(null);
 
+  const completedOneTimeGoal = savingsGoals.find(g => g.id === celebratingGoal && g.isCompleted);
+
   useEffect(() => {
-    if (celebratingGoal !== null) {
+    if (completedOneTimeGoal) {
       const timer = setTimeout(() => setCelebratingGoal(null), 5000);
       return () => clearTimeout(timer);
     }
-  }, [celebratingGoal]);
+  }, [completedOneTimeGoal, celebratingGoal]);
 
   const handleAddFunds = (goal: SavingsGoal) => {
     setSelectedGoal(goal);
@@ -223,7 +231,7 @@ function SavingsGoalsTab() {
     }).format(amount);
   };
   
-  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const capitalize = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
 
   if (loading && savingsGoals.length === 0) {
     return (
@@ -252,12 +260,14 @@ function SavingsGoalsTab() {
               savingsGoals.map((goal) => {
                 const progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
                 const isAchieved = goal.currentAmount >= goal.targetAmount;
+                const isCompleted = goal.isCompleted || (isAchieved && goal.recurrence === 'one-time');
+
                 return (
                     <div key={goal.id}>
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">{goal.name}</span>
-                                {goal.isCompleted && goal.recurrence === 'one-time' ? (
+                                {isCompleted ? (
                                     <div className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5">
                                         <Trophy className="h-3 w-3 text-accent" />
                                         <span className="text-xs font-semibold text-accent">Goal Achieved!</span>
@@ -273,20 +283,30 @@ function SavingsGoalsTab() {
                                 <span className="text-sm text-muted-foreground">
                                     {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
                                 </span>
-                                {isAchieved && !goal.isCompleted && goal.recurrence === 'one-time' ? (
-                                    <Button size="sm" variant="outline" onClick={() => handleMarkComplete(goal.id)}>
-                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                        Mark as Complete
-                                    </Button>
-                                ) : (
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddFunds(goal)}>
-                                        <Plus className="h-4 w-4" />
-                                    </Button>
-                                )}
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                                            <EllipsisVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => handleAddFunds(goal)} disabled={isCompleted}>
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            <span>Add Funds</span>
+                                        </DropdownMenuItem>
+                                        {!isCompleted && (
+                                            <DropdownMenuItem onClick={() => handleMarkComplete(goal.id)}>
+                                                <CheckCircle className="mr-2 h-4 w-4" />
+                                                <span>Mark as Complete</span>
+                                            </DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
                         <Progress value={progress} className={cn({
-                          "[&>div]:bg-accent": (goal.isCompleted && goal.recurrence === 'one-time') || isAchieved,
+                          "[&>div]:bg-accent": isCompleted,
                         })}/>
                     </div>
                 )

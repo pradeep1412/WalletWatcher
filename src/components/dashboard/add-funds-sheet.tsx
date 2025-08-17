@@ -58,7 +58,7 @@ export function AddFundsSheet({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!goal) return;
-    await addFundsToSavingsGoal(goal.id, values.amount);
+    await addFundsToSavingsGoal(goal, values.amount);
     setIsOpen(false);
   }
   

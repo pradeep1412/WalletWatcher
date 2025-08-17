@@ -28,8 +28,8 @@ type WalletWatcherContextType = AppState & {
   addTransaction: (transaction: Omit<Transaction, "id">) => Promise<void>;
   setBudget: (budget: Budget) => Promise<void>;
   markGoalAsComplete: (categoryId: number) => Promise<void>;
-  addSavingsGoal: (goal: Omit<SavingsGoal, "id" | "currentAmount">) => Promise<void>;
-  addFundsToSavingsGoal: (goalId: number, amount: number) => Promise<void>;
+  addSavingsGoal: (goal: Omit<SavingsGoal, "id" | "currentAmount" | "isCompleted">) => Promise<void>;
+  addFundsToSavingsGoal: (goal: SavingsGoal, amount: number) => Promise<void>;
   markSavingsGoalAsComplete: (goalId: number) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -94,25 +94,34 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     
     const getPeriodDates = (period: Period) => {
         const now = new Date();
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay());
+        const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
         startOfWeek.setHours(0, 0, 0, 0);
 
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        
         const startOfYear = new Date(now.getFullYear(), 0, 1);
+        startOfYear.setHours(0, 0, 0, 0);
 
         switch (period) {
-            case 'week':
-                return { start: startOfWeek, end: new Date() };
-            case 'month':
-                return { start: startOfMonth, end: new Date() };
-            case 'year':
-                return { start: startOfYear, end: new Date() };
+            case 'week': {
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 6);
+                endOfWeek.setHours(23, 59, 59, 999);
+                return { start: startOfWeek, end: endOfWeek };
+            }
+            case 'month': {
+                 const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                 endOfMonth.setHours(23, 59, 59, 999);
+                return { start: startOfMonth, end: endOfMonth };
+            }
+            case 'year': {
+                const endOfYear = new Date(now.getFullYear(), 11, 31);
+                endOfYear.setHours(23, 59, 59, 999);
+                return { start: startOfYear, end: endOfYear };
+            }
             default:
-                const defaultStartOfWeek = new Date();
-                defaultStartOfWeek.setDate(defaultStartOfWeek.getDate() - defaultStartOfWeek.getDay());
-                defaultStartOfWeek.setHours(0, 0, 0, 0);
-                return { start: defaultStartOfWeek, end: new Date() };
+                return { start: startOfMonth, end: new Date() };
         }
     };
 
@@ -168,7 +177,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addSavingsGoal = async (goal: Omit<SavingsGoal, "id" | "currentAmount">) => {
+  const addSavingsGoal = async (goal: Omit<SavingsGoal, "id" | "currentAmount" | "isCompleted">) => {
     try {
         await db.addSavingsGoal(goal);
         await loadData();
@@ -183,10 +192,17 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const addFundsToSavingsGoal = async (goalId: number, amount: number) => {
+  const addFundsToSavingsGoal = async (goal: SavingsGoal, amount: number) => {
     try {
-        await db.addFundsToSavingsGoal(goalId, amount);
-        await loadData();
+        await db.addFundsToSavingsGoal(goal.id, amount);
+        const newTotal = goal.currentAmount + amount;
+        
+        if (newTotal >= goal.targetAmount && goal.recurrence === 'one-time' && !goal.isCompleted) {
+           await markSavingsGoalAsComplete(goal.id);
+        } else {
+           await loadData();
+        }
+        
         toast({ title: "Success", description: "Funds added to goal." });
     } catch(error) {
         console.error(error);
