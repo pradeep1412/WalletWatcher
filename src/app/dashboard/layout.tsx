@@ -49,14 +49,6 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, logout, loading } = useWalletWatcher();
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-screen w-full flex-col">
       <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
@@ -118,7 +110,11 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="flex-1 overflow-y-auto p-4 md:p-6">
-        {children}
+        {loading ? (
+            <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        ) : children}
       </main>
     </div>
   );

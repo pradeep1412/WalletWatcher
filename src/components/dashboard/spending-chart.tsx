@@ -12,9 +12,10 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
 import { chartColors } from "@/lib/chart-colors";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function SpendingChart() {
-  const { filteredTransactions, categories, user } = useWalletWatcher();
+  const { filteredTransactions, categories, user, loading } = useWalletWatcher();
 
   const chartData = useMemo(() => {
     const categorySpending = new Map<string, number>();
@@ -40,6 +41,22 @@ export function SpendingChart() {
     }).format(amount);
   };
   
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent>
+          <div className="h-[250px] w-full">
+            <Skeleton className="h-full w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>

@@ -17,9 +17,23 @@ import { SetBudgetSheet } from "./set-budget-sheet";
 import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function BudgetGoalSkeleton() {
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-5 w-32" />
+            </div>
+            <Skeleton className="h-4 w-full" />
+        </div>
+    )
+}
+
 
 export function BudgetGoals() {
-  const { filteredTransactions, categories, budgets, markGoalAsComplete, period } = useWalletWatcher();
+  const { filteredTransactions, categories, budgets, markGoalAsComplete, period, loading } = useWalletWatcher();
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [celebratingGoal, setCelebratingGoal] = useState<number | null>(null);
@@ -85,6 +99,29 @@ export function BudgetGoals() {
   };
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  
+  if (loading) {
+    return (
+        <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="mt-1 h-4 w-48" />
+              </div>
+              <Skeleton className="h-9 w-24" />
+            </CardHeader>
+            <CardContent>
+                <ScrollArea className="h-[250px]">
+                  <div className="space-y-4">
+                      <BudgetGoalSkeleton />
+                      <BudgetGoalSkeleton />
+                      <BudgetGoalSkeleton />
+                  </div>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+    )
+  }
 
   return (
     <Card className="h-full">

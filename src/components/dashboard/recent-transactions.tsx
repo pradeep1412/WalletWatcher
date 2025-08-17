@@ -22,9 +22,30 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function TransactionRowSkeleton() {
+  return (
+    <TableRow>
+      <TableCell>
+        <Skeleton className="h-5 w-32" />
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-6 w-24 rounded-full" />
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
+        <Skeleton className="h-5 w-24" />
+      </TableCell>
+      <TableCell className="text-right">
+        <Skeleton className="h-5 w-16" />
+      </TableCell>
+    </TableRow>
+  );
+}
+
 
 export function TransactionsList({ limit }: { limit?: number }) {
-  const { filteredTransactions, categories, user } = useWalletWatcher();
+  const { filteredTransactions, categories, user, loading } = useWalletWatcher();
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(user?.country ? `en-${user.country}` : 'en-US', {
@@ -35,6 +56,14 @@ export function TransactionsList({ limit }: { limit?: number }) {
   
   const transactions = filteredTransactions || [];
   const displayedTransactions = limit ? transactions.slice(0, limit) : transactions;
+
+  const renderSkeletons = () => {
+    const skeletonCount = limit || 5;
+    return Array.from({ length: skeletonCount }).map((_, index) => (
+      <TransactionRowSkeleton key={`skeleton-${index}`} />
+    ));
+  };
+
 
   return (
     <Card>
@@ -55,7 +84,9 @@ export function TransactionsList({ limit }: { limit?: number }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {displayedTransactions.length > 0 ? (
+            {loading ? (
+                renderSkeletons()
+            ) : displayedTransactions.length > 0 ? (
               displayedTransactions.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell>
@@ -90,7 +121,7 @@ export function TransactionsList({ limit }: { limit?: number }) {
           </TableBody>
         </Table>
       </CardContent>
-      {limit && transactions.length > limit && (
+      {limit && transactions.length > limit && !loading && (
         <CardFooter className="justify-end">
           <Button asChild variant="ghost" size="sm">
             <Link href="/dashboard/transactions">
