@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -93,7 +92,7 @@ export function BudgetGoals() {
           <div className="space-y-4">
             {budgetData.length > 0 ? (
               budgetData.map((item) => (
-                <div key={item.name} className="group">
+                <div key={item.name}>
                   <div className="mb-1 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{item.name}</span>
@@ -109,12 +108,10 @@ export function BudgetGoals() {
                         {formatCurrency(item.spent)} / {formatCurrency(item.budget)}
                       </span>
                       {item.isAchieved && !item.isCompleted ? (
-                        <div className="opacity-0 transition-opacity group-hover:opacity-100">
-                          <Button size="sm" variant="outline" onClick={() => handleMarkComplete(item.id)}>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Mark as Complete
-                          </Button>
-                        </div>
+                        <Button size="sm" variant="outline" onClick={() => handleMarkComplete(item.id)}>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Mark as Complete
+                        </Button>
                       ) : (
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSetBudget(item.id)}>
                           <Pencil className="h-3 w-3" />
