@@ -19,7 +19,7 @@ export function SpendingChart() {
   const chartData = useMemo(() => {
     const categorySpending = new Map<string, number>();
 
-    filteredTransactions
+    (filteredTransactions || [])
       .filter((t) => t.type === "expense")
       .forEach((t) => {
         const categoryName = categories.find(c => c.id === t.categoryId)?.name || 'Uncategorized';
