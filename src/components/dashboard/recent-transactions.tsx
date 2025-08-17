@@ -19,9 +19,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
-export function RecentTransactions() {
+export function TransactionsList() {
   const { transactions, categories, user } = useWalletWatcher();
-  const recentTransactions = transactions.slice(0, 5);
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(user?.country ? `en-${user.country}` : 'en-US', {
@@ -33,9 +32,9 @@ export function RecentTransactions() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Transactions</CardTitle>
+        <CardTitle>Transactions</CardTitle>
         <CardDescription>
-          Your 5 most recent transactions.
+          A complete history of your income and expenses.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -49,8 +48,8 @@ export function RecentTransactions() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentTransactions.length > 0 ? (
-              recentTransactions.map((tx) => (
+            {transactions.length > 0 ? (
+              transactions.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell>
                     <div className="font-medium">{tx.description}</div>

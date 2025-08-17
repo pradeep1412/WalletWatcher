@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import {
   Wallet,
   LayoutDashboard,
-  ArrowRightLeft,
   Settings,
   LogOut,
   Loader2,
@@ -56,15 +55,9 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard" isActive={pathname === '/dashboard'}>
+              <SidebarMenuButton href="/dashboard" isActive={pathname.startsWith('/dashboard')}>
                 <LayoutDashboard />
                 <span>Dashboard</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard/transactions" isActive={pathname === '/dashboard/transactions'}>
-                <ArrowRightLeft />
-                <span>Transactions</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>

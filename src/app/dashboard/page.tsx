@@ -4,7 +4,7 @@ import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { BudgetGoals } from "@/components/dashboard/budget-goals";
-import { RecentTransactions } from "@/components/dashboard/recent-transactions";
+import { TransactionsList } from "@/components/dashboard/recent-transactions";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
 import { ImportSheet } from "@/components/dashboard/import-sheet";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <RecentTransactions />
+      <TransactionsList />
     </div>
   );
 }
