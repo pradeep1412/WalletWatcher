@@ -23,7 +23,8 @@ export function OverviewCards() {
   const { income, expenses, balance } = useMemo(() => {
     let income = 0;
     let expenses = 0;
-    filteredTransactions.forEach((t) => {
+    // Ensure filteredTransactions is an array before calling forEach
+    (filteredTransactions || []).forEach((t) => {
       const amount = Math.abs(t.amount);
       if (t.type === "income") {
         income += amount;
