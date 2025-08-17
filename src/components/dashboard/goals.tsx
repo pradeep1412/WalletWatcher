@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -241,7 +242,7 @@ function SavingsGoalsTab() {
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">{goal.name}</span>
-                                <Badge variant="secondary" className="text-xs">{capitalize(goal.recurrence)}</Badge>
+                                {goal.recurrence && <Badge variant="secondary" className="text-xs">{capitalize(goal.recurrence)}</Badge>}
                                 {progress >= 100 && <Target className="h-4 w-4 text-green-500" />}
                             </div>
                             <div className="flex items-center gap-2">
