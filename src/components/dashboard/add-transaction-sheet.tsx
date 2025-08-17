@@ -44,10 +44,10 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { type Transaction } from "@/lib/types";
-import { Separator } from "@/components/ui/separator";
 
 const formSchema = z.object({
   description: z.string().min(1, "Description is required."),
@@ -297,7 +297,6 @@ function ImportTransactionsSection({ onImportCompleted }: { onImportCompleted: (
   return (
     <div className="space-y-4 pt-4">
         <div>
-            <h4 className="text-base font-semibold">Import from File</h4>
             <p className="text-sm text-muted-foreground">
             Your Excel file should have columns named:{" "}
             <code className="font-mono text-primary">Date</code>,{" "}
@@ -338,13 +337,19 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             Add a single transaction manually or import multiple from a file.
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-4 space-y-4">
-            <div>
-                <h4 className="text-base font-semibold">Manual Entry</h4>
-                <ManualTransactionForm onTransactionAdded={handleCloseSheet} />
-            </div>
-            <Separator />
-            <ImportTransactionsSection onImportCompleted={handleCloseSheet} />
+        <div className="mt-4">
+            <Tabs defaultValue="manual">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="manual">Manual</TabsTrigger>
+                    <TabsTrigger value="import">Import</TabsTrigger>
+                </TabsList>
+                <TabsContent value="manual">
+                    <ManualTransactionForm onTransactionAdded={handleCloseSheet} />
+                </TabsContent>
+                <TabsContent value="import">
+                    <ImportTransactionsSection onImportCompleted={handleCloseSheet} />
+                </TabsContent>
+            </Tabs>
         </div>
       </SheetContent>
     </Sheet>
