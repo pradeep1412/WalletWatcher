@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -6,6 +7,7 @@ import {
   Settings,
   LogOut,
   Loader2,
+  PlusCircle,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,6 +27,7 @@ import {
 } from "@/hooks/use-wallet-watcher";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const pathname = usePathname();
@@ -94,6 +97,13 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                       Transactions
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                   <AddTransactionSheet>
+                     <button className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        <span>Add Transaction</span>
+                     </button>
+                    </AddTransactionSheet>
                   <DropdownMenuSeparator />
                 </div>
               <DropdownMenuItem>

@@ -28,7 +28,7 @@ export default function DashboardPage() {
         <div className="flex w-full items-center gap-2 md:w-auto">
            <DashboardPeriodFilter />
           <AddTransactionSheet>
-            <Button className="w-full md:w-auto">
+            <Button className="hidden md:inline-flex">
               <PlusCircle className="mr-1 h-4 w-4" />
               Add
             </Button>
