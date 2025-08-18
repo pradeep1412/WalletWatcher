@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -71,9 +72,9 @@ export function SpendingChart() {
           Your top spending categories for the selected period.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={{}} className="mx-auto aspect-video h-[250px]">
-          {chartData.length > 0 ? (
+      <CardContent className="h-[250px]">
+        {chartData.length > 0 ? (
+          <ChartContainer config={{}} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} layout="vertical">
                 <XAxis type="number" hide />
@@ -112,14 +113,14 @@ export function SpendingChart() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-muted-foreground">
-                No expense data to display for this period.
-              </p>
-            </div>
-          )}
-        </ChartContainer>
+          </ChartContainer>
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-muted-foreground">
+              No expense data to display for this period.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
