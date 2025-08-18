@@ -121,7 +121,7 @@ function ManualTransactionForm({ onTransactionAdded }: { onTransactionAdded: () 
                 <RadioGroup
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0"
+                  className="flex flex-col space-y-2"
                 >
                   <FormItem className="flex items-center space-x-2 space-y-0">
                     <FormControl>
