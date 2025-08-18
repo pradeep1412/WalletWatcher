@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -16,6 +16,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function SpendingChart() {
   const { filteredTransactions, categories, user, loading } = useWalletWatcher();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   const chartData = useMemo(() => {
     const categorySpending = new Map<string, number>();
@@ -41,7 +47,7 @@ export function SpendingChart() {
     }).format(amount);
   };
   
-  if (loading) {
+  if (loading || !isClient) {
     return (
       <Card>
         <CardHeader>
