@@ -29,8 +29,8 @@ export default function DashboardPage() {
            <DashboardPeriodFilter />
           <AddTransactionSheet>
             <Button className="w-full md:w-auto">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Transaction
+              <PlusCircle className="mr-1 h-4 w-4" />
+              Add
             </Button>
           </AddTransactionSheet>
         </div>
