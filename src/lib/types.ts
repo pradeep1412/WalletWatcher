@@ -2,6 +2,7 @@ export interface User {
   id: number;
   username: string;
   country: string;
+  theme?: 'light' | 'dark';
 }
 
 export interface Category {

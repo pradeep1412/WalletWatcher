@@ -89,7 +89,7 @@ class DatabaseService {
       tx.onerror = () => reject(tx.error);
 
       // Add user
-      const userWithId: User = { ...user, id: 1 };
+      const userWithId: User = { ...user, id: 1, theme: 'light' };
       userStore.put(userWithId);
 
       // Add default categories
@@ -109,6 +109,25 @@ class DatabaseService {
       const request = store.get(1);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
+    });
+  }
+  
+  async updateUserTheme(theme: 'light' | 'dark'): Promise<void> {
+    const store = await this.getStore(USER_STORE, "readwrite");
+    return new Promise((resolve, reject) => {
+        const request = store.get(1);
+        request.onsuccess = () => {
+            const user = request.result;
+            if (user) {
+                user.theme = theme;
+                const updateRequest = store.put(user);
+                updateRequest.onsuccess = () => resolve();
+                updateRequest.onerror = () => reject(updateRequest.error);
+            } else {
+                reject(new Error("User not found"));
+            }
+        };
+        request.onerror = () => reject(request.error);
     });
   }
 

@@ -5,17 +5,21 @@ import { useTheme } from "next-themes"
 import { Moon, Sun } from "lucide-react"
 
 import { Switch } from "@/components/ui/switch"
+import { useWalletWatcher } from "@/hooks/use-wallet-watcher"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
+  const { updateUserTheme } = useWalletWatcher();
 
   React.useEffect(() => {
     setMounted(true)
   }, [])
   
   const handleThemeChange = (checked: boolean) => {
-    setTheme(checked ? "dark" : "light")
+    const newTheme = checked ? "dark" : "light";
+    setTheme(newTheme);
+    updateUserTheme(newTheme);
   }
 
   if (!mounted) {

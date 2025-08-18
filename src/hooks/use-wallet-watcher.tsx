@@ -19,8 +19,10 @@ import {
   type Period,
   type SavingsGoal,
   type Category,
+  type User,
 } from "@/lib/types";
 import { useToast } from "./use-toast";
+import { useTheme } from "next-themes";
 
 type WalletWatcherContextType = AppState & {
   filteredTransactions: Transaction[];
@@ -33,6 +35,7 @@ type WalletWatcherContextType = AppState & {
   addSavingsGoal: (goal: Omit<SavingsGoal, "id" | "currentAmount" | "isCompleted">) => Promise<void>;
   addFundsToSavingsGoal: (goal: SavingsGoal, amount: number) => Promise<void>;
   markSavingsGoalAsComplete: (goalId: number) => Promise<void>;
+  updateUserTheme: (theme: 'light' | 'dark') => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -41,6 +44,7 @@ const AppContext = createContext<WalletWatcherContextType | undefined>(undefined
 export function WalletWatcherProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { setTheme: setNextTheme } = useTheme();
   const [state, setState] = useState<AppState>({
     user: null,
     transactions: [],
@@ -60,6 +64,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
         router.replace("/");
         return;
       }
+      setNextTheme(user.theme || 'light');
       const [transactions, categories, budgets, savingsGoals] = await Promise.all([
         db.getTransactions(),
         db.getCategories(),
@@ -84,7 +89,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
         description: "Please try refreshing the page.",
       });
     }
-  }, [router, toast]);
+  }, [router, toast, setNextTheme]);
 
   useEffect(() => {
     loadData();
@@ -269,6 +274,18 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUserTheme = async (theme: 'light' | 'dark') => {
+      if (!state.user) return;
+      try {
+          await db.updateUserTheme(theme);
+          setState(s => ({...s, user: { ...s.user!, theme }}));
+          setNextTheme(theme);
+      } catch (error) {
+          console.error("Failed to update theme", error);
+          toast({ variant: "destructive", title: "Error", description: "Could not save theme preference." });
+      }
+  };
+
 
   const logout = async () => {
     try {
@@ -298,6 +315,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     addSavingsGoal,
     addFundsToSavingsGoal,
     markSavingsGoalAsComplete,
+    updateUserTheme,
   };
 
   return (

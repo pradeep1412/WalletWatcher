@@ -22,8 +22,8 @@ export default function RootLayout({
       <body className={`font-sans ${inter.variable} antialiased py-4`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           {children}
