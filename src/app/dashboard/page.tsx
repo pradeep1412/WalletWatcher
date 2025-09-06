@@ -8,8 +8,8 @@ import { Goals } from "@/components/dashboard/goals";
 import { TransactionsList } from "@/components/dashboard/recent-transactions";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
 import { DashboardPeriodFilter } from "@/components/dashboard/dashboard-period-filter";
+import { AdBanner } from "@/components/dashboard/ad-banner";
 
 export default function DashboardPage() {
   const { user } = useWalletWatcher();
@@ -29,7 +29,6 @@ export default function DashboardPage() {
            <DashboardPeriodFilter />
           <AddTransactionSheet>
             <Button className="hidden md:inline-flex">
-              <PlusCircle className="mr-1 h-4 w-4" />
               Add
             </Button>
           </AddTransactionSheet>
@@ -37,6 +36,8 @@ export default function DashboardPage() {
       </div>
 
       <OverviewCards />
+      
+      <AdBanner />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
