@@ -67,7 +67,7 @@ export default function LoginPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: "",
-      country: "",
+      country: "US",
     },
   });
 
