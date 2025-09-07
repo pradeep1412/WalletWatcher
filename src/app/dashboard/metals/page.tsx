@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Loader2, TrendingUp, AlertTriangle, Atom, Gem, Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Asset, HistoryData } from "@/lib/types";
@@ -122,5 +122,3 @@ export default function MetalsPage() {
     </div>
   );
 }
-
-    
