@@ -1,9 +1,8 @@
-
 "use client";
 
 import {
-  Line,
-  LineChart,
+  Area,
+  AreaChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -32,25 +31,25 @@ export function AssetChart({ data, isPositive }: AssetChartProps) {
       </div>
     );
   }
-
-  const strokeColor = isPositive ? "hsl(var(--primary))" : "hsl(var(--destructive))";
+  
+  const strokeColor = isPositive ? "hsl(var(--chart-1))" : "hsl(var(--destructive))";
 
   const chartData = data.map(item => ({
       ...item,
       price: item.price
   }));
-
+  
   const yDomain: [string, string] = ['dataMin - (dataMax-dataMin)*0.1', 'dataMax + (dataMax-dataMin)*0.1'];
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-       <LineChart
+    <ChartContainer config={{}} className="h-full w-full">
+      <AreaChart
         data={chartData}
-        margin={{ top: 5, right: 10, left: 10, bottom: 0 }}
-       >
+        margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
+      >
         <defs>
             <linearGradient id={`gradient-${isPositive}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={strokeColor} stopOpacity={0.2}/>
+                <stop offset="5%" stopColor={strokeColor} stopOpacity={0.4}/>
                 <stop offset="95%" stopColor={strokeColor} stopOpacity={0}/>
             </linearGradient>
         </defs>
@@ -72,17 +71,16 @@ export function AssetChart({ data, isPositive }: AssetChartProps) {
         />
         <XAxis dataKey="date" hide />
         <YAxis domain={yDomain} hide />
-        <Line
+        <Area
           dataKey="price"
           type="monotone"
           stroke={strokeColor}
           strokeWidth={2}
-          dot={false}
           fillOpacity={1}
           fill={`url(#gradient-${isPositive})`}
+          dot={false}
         />
-       </LineChart>
-    </ResponsiveContainer>
+      </AreaChart>
+    </ChartContainer>
   );
 }
-
