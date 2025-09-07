@@ -37,6 +37,7 @@ type WalletWatcherContextType = AppState & {
   markSavingsGoalAsComplete: (goalId: number) => Promise<void>;
   updateUserTheme: (theme: 'light' | 'dark') => Promise<void>;
   logout: () => Promise<void>;
+  formatCurrency: (amount: number, options?: Intl.NumberFormatOptions) => string;
 };
 
 const AppContext = createContext<WalletWatcherContextType | undefined>(undefined);
@@ -95,6 +96,17 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     loadData();
   }, [loadData]);
   
+  const formatCurrency = useCallback((amount: number, options: Intl.NumberFormatOptions = {}) => {
+    if (!state.user?.currency) return amount.toString();
+    
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: state.user.currency,
+      ...options
+    }).format(amount);
+  }, [state.user]);
+
+
   const filteredTransactions = useMemo(() => {
     const transactions = state.transactions || [];
     if (state.loading) return [];
@@ -316,6 +328,7 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
     addFundsToSavingsGoal,
     markSavingsGoalAsComplete,
     updateUserTheme,
+    formatCurrency,
   };
 
   return (

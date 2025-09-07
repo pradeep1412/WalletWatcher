@@ -5,8 +5,10 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, TrendingUp, AlertTriangle, Atom, Gem, Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Asset } from "@/lib/types";
+import type { Asset, HistoryData } from "@/lib/types";
 import { AssetCard } from "@/components/dashboard/asset-card";
+import { format, subHours } from "date-fns";
+
 
 function AssetCardSkeleton() {
     return (
@@ -53,11 +55,15 @@ export default function MetalsPage() {
         const platinumPrice = parsePrice(data.platinum.price);
         const niftyPrice = parsePrice(data.nifty);
 
-        const generateMockHistory = (basePrice: number) => {
+        const generateMockHistory = (basePrice: number): HistoryData[] => {
           if (isNaN(basePrice)) return [];
-          const history = [];
-          for (let i = 0; i < 15; i++) {
-            history.push(basePrice * (1 + (Math.random() - 0.5) * 0.05));
+          const history: HistoryData[] = [];
+          const now = new Date();
+          for (let i = 23; i >= 0; i--) {
+            history.push({
+                date: format(subHours(now, i), "h:mm a"),
+                price: basePrice * (1 + (Math.random() - 0.5) * 0.05),
+            });
           }
           return history;
         }

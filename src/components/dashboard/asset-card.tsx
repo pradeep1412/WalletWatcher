@@ -8,12 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AssetChart } from "./asset-chart";
 import type { Asset } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useWalletWatcher } from "@/hooks/use-wallet-watcher";
+
 
 interface AssetCardProps {
   asset: Asset;
 }
 
 export function AssetCard({ asset }: AssetCardProps) {
+  const { formatCurrency } = useWalletWatcher();
   const [flash, setFlash] = useState<"up" | "down" | null>(null);
   const [prevPrice, setPrevPrice] = useState(asset.price);
 
@@ -30,22 +33,16 @@ export function AssetCard({ asset }: AssetCardProps) {
       if (isNaN(price)) return "";
       
       const isNifty = asset.symbol === "NIFTY";
-      const formatOptions: Intl.NumberFormatOptions = isNifty 
-        ? {
-          style: "decimal",
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-          ...options
-        }
-        : {
-          style: "currency",
-          currency: "INR",
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-          ...options
-      };
-
-      return new Intl.NumberFormat("en-IN", formatOptions).format(price);
+      if (isNifty) {
+          return new Intl.NumberFormat("en-IN", {
+              style: "decimal",
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+              ...options
+          }).format(price);
+      }
+      
+      return formatCurrency(price, options);
   };
   
   const IconComponent = asset.icon as LucideIcon | ((props: SVGProps<SVGSVGElement>) => JSX.Element);

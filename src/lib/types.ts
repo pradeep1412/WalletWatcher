@@ -67,6 +67,11 @@ export interface QrData {
     data: QrTransaction[];
 }
 
+export interface HistoryData {
+    date: string;
+    price: number;
+}
+
 export interface Asset {
   symbol: string;
   name: string;
@@ -74,6 +79,7 @@ export interface Asset {
   change: number;
   changePercent: number;
   unit: string;
-  history: number[];
+  history: HistoryData[];
   icon: LucideIcon | ((props: SVGProps<SVGSVGElement>) => JSX.Element);
 }
+
