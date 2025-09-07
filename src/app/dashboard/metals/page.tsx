@@ -2,12 +2,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, TrendingUp, AlertTriangle, Atom, Gem, Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Asset, HistoryData } from "@/lib/types";
 import { AssetCard } from "@/components/dashboard/asset-card";
-import { format, subHours } from "date-fns";
+import { format, subHours, subDays } from "date-fns";
+import { db } from "@/lib/db";
 
 
 function AssetCardSkeleton() {
@@ -28,11 +29,12 @@ function AssetCardSkeleton() {
     )
 }
 
-// Helper to parse price string like "₹1,234.56" or "24,741" into a number
-const parsePrice = (priceString: string): number => {
-    if (typeof priceString !== 'string') return NaN;
-    return parseFloat(priceString.replace(/[₹,]/g, ''));
-}
+const ALL_ASSETS = [
+    { symbol: "NIFTY", name: "Nifty 50", unit: "points", icon: TrendingUp },
+    { symbol: "GOLD", name: "Gold (24k)", unit: "gram", icon: Award },
+    { symbol: "SILVER", name: "Silver", unit: "gram", icon: Gem },
+    { symbol: "PLATINUM", name: "Platinum", unit: "gram", icon: Atom },
+];
 
 export default function MetalsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -40,77 +42,40 @@ export default function MetalsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchPrices() {
+    async function fetchAssetData() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("/api/metals");
-        if (!response.ok) {
-          throw new Error("Failed to fetch metal prices. Please try again later.");
-        }
-        const data = await response.json();
-        
-        const goldPrice = parsePrice(data.gold["24k"]);
-        const silverPrice = parsePrice(data.silver.price);
-        const platinumPrice = parsePrice(data.platinum.price);
-        const niftyPrice = parsePrice(data.nifty);
 
-        const generateMockHistory = (basePrice: number): HistoryData[] => {
-          if (isNaN(basePrice)) return [];
-          const history: HistoryData[] = [];
-          const now = new Date();
-          for (let i = 23; i >= 0; i--) {
-            history.push({
-                date: format(subHours(now, i), "h:mm a"),
-                price: basePrice * (1 + (Math.random() - 0.5) * 0.05),
+        const loadedAssets: Asset[] = [];
+
+        for (const assetInfo of ALL_ASSETS) {
+            const history = await db.getAssetHistory(assetInfo.symbol, 1);
+            
+            if (history.length === 0) continue;
+
+            const latestPrice = history[0].price;
+            const oldestPrice = history[history.length - 1].price;
+            
+            const change = latestPrice - oldestPrice;
+            const changePercent = oldestPrice > 0 ? (change / oldestPrice) * 100 : 0;
+            
+            const historyData: HistoryData[] = history.map(p => ({
+                date: format(new Date(p.date), "h:mm a"),
+                price: p.price
+            })).reverse();
+
+
+            loadedAssets.push({
+                ...assetInfo,
+                price: latestPrice,
+                change,
+                changePercent,
+                history: historyData,
             });
-          }
-          return history;
         }
-
-        const mockAssetData = (price: number) => {
-          if (isNaN(price)) return { change: 0, changePercent: 0, history: []};
-          const change = price * (Math.random() - 0.5) * 0.02;
-          const changePercent = (change / price) * 100;
-          return { change, changePercent, history: generateMockHistory(price) };
-        }
-
-        const newAssets: Asset[] = [
-           { 
-            symbol: "NIFTY",
-            name: "Nifty 50", 
-            price: niftyPrice,
-            unit: "points",
-            icon: TrendingUp, 
-            ...mockAssetData(niftyPrice) 
-          },
-          { 
-            symbol: "GOLD",
-            name: "Gold (24k)", 
-            price: goldPrice,
-            unit: data.gold.unit,
-            icon: Award, 
-            ...mockAssetData(goldPrice) 
-          },
-          { 
-            symbol: "SILVER",
-            name: "Silver", 
-            price: silverPrice,
-            unit: data.silver.unit, 
-            icon: Gem, 
-            ...mockAssetData(silverPrice) 
-          },
-          { 
-            symbol: "PLATINUM",
-            name: "Platinum", 
-            price: platinumPrice,
-            unit: data.platinum.unit, 
-            icon: Atom, 
-            ...mockAssetData(platinumPrice)
-          },
-        ];
-
-        setAssets(newAssets);
+        
+        setAssets(loadedAssets);
 
       } catch (err) {
         setError(err instanceof Error ? err.message : "An unknown error occurred.");
@@ -118,7 +83,7 @@ export default function MetalsPage() {
         setLoading(false);
       }
     }
-    fetchPrices();
+    fetchAssetData();
   }, []);
 
   return (
@@ -126,7 +91,7 @@ export default function MetalsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Live Market Data</h1>
         <p className="text-muted-foreground">
-            Stay updated with the latest prices of precious metals and market indices.
+            Stay updated with the latest prices of precious metals and market indices. Prices updated periodically.
         </p>
       </div>
 
@@ -140,14 +105,22 @@ export default function MetalsPage() {
       ) : error ? (
         <Card className="flex flex-col items-center justify-center p-8 text-center">
              <AlertTriangle className="h-12 w-12 text-destructive" />
-            <h2 className="mt-4 text-xl font-semibold">Could not fetch prices</h2>
+            <h2 className="mt-4 text-xl font-semibold">Could not load asset data</h2>
             <p className="mt-2 text-muted-foreground">{error}</p>
         </Card>
       ) : assets.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {assets.map(asset => <AssetCard key={asset.symbol} asset={asset} />)}
         </div>
-      ) : null}
+      ) : (
+        <Card className="flex flex-col items-center justify-center p-8 text-center">
+            <Loader2 className="h-12 w-12 text-primary" />
+            <h2 className="mt-4 text-xl font-semibold">No data yet</h2>
+            <p className="mt-2 text-muted-foreground">Asset price data is being fetched. This page will update shortly.</p>
+        </Card>
+      )}
     </div>
   );
 }
+
+    

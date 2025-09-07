@@ -83,3 +83,11 @@ export interface Asset {
   icon: LucideIcon | ((props: SVGProps<SVGSVGElement>) => JSX.Element);
 }
 
+export interface AssetPrice {
+    id: number;
+    symbol: string;
+    date: string; // ISO 8601 format
+    price: number;
+}
+
+    

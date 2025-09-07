@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -6,15 +7,18 @@ import {
   type Category,
   type Budget,
   type SavingsGoal,
+  type AssetPrice,
 } from "./types";
 
 const DB_NAME = "WalletWatcherDB";
-const DB_VERSION = 2; // Incremented version for new store
+const DB_VERSION = 3; // Incremented version for new store
 const USER_STORE = "user";
 const TRANSACTIONS_STORE = "transactions";
 const CATEGORIES_STORE = "categories";
 const BUDGETS_STORE = "budgets";
 const SAVINGS_GOALS_STORE = "savingsGoals";
+const ASSET_PRICES_STORE = "assetPrices";
+
 
 class DatabaseService {
   private db: IDBDatabase | null = null;
@@ -50,6 +54,11 @@ class DatabaseService {
         if (!db.objectStoreNames.contains(SAVINGS_GOALS_STORE)) {
            db.createObjectStore(SAVINGS_GOALS_STORE, { keyPath: "id", autoIncrement: true });
         }
+        if (!db.objectStoreNames.contains(ASSET_PRICES_STORE)) {
+            const assetPriceStore = db.createObjectStore(ASSET_PRICES_STORE, { keyPath: "id", autoIncrement: true });
+            assetPriceStore.createIndex("symbol_date", ["symbol", "date"], { unique: true });
+            assetPriceStore.createIndex("symbol", "symbol", { unique: false });
+        }
       };
 
       request.onsuccess = (event) => {
@@ -83,13 +92,15 @@ class DatabaseService {
     const tx = db.transaction([USER_STORE, CATEGORIES_STORE], "readwrite");
     const userStore = tx.objectStore(USER_STORE);
     const categoryStore = tx.objectStore(CATEGORIES_STORE);
+
+    const countryData = countries.find(c => c.code === user.country);
     
     return new Promise((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
 
       // Add user
-      const userWithId: User = { ...user, id: 1, theme: 'light' };
+      const userWithId: User = { ...user, id: 1, theme: 'light', currency: countryData?.currency || "USD" };
       userStore.put(userWithId);
 
       // Add default categories
@@ -314,12 +325,49 @@ class DatabaseService {
         request.onerror = () => reject(request.error);
       });
   }
+  
+   // Asset Price methods
+  async addAssetPrices(prices: Omit<AssetPrice, "id">[]): Promise<void> {
+    const store = await this.getStore(ASSET_PRICES_STORE, "readwrite");
+    return new Promise((resolve, reject) => {
+      const tx = store.transaction;
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      
+      for (const price of prices) {
+        // Don't add if price is not a valid number
+        if (isNaN(price.price)) continue;
+        store.add(price);
+      }
+    });
+  }
 
+  async getAssetHistory(symbol: string, days: number = 1): Promise<AssetPrice[]> {
+    const store = await this.getStore(ASSET_PRICES_STORE, "readonly");
+    const index = store.index("symbol");
+    const range = IDBKeyRange.only(symbol);
+    
+    return new Promise((resolve, reject) => {
+      const request = index.getAll(range);
+      request.onsuccess = () => {
+        const sortedResults = request.result.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        const now = new Date();
+        const cutoff = new Date(now);
+        cutoff.setDate(now.getDate() - days);
+
+        const filtered = sortedResults.filter(p => new Date(p.date) >= cutoff);
+
+        resolve(filtered);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
 
   // Clear data
   async clearUserData(): Promise<void> {
     const db = await this.openDB();
-    const storeNames = [USER_STORE, TRANSACTIONS_STORE, CATEGORIES_STORE, BUDGETS_STORE, SAVINGS_GOALS_STORE];
+    const storeNames = [USER_STORE, TRANSACTIONS_STORE, CATEGORIES_STORE, BUDGETS_STORE, SAVINGS_GOALS_STORE, ASSET_PRICES_STORE];
     const transaction = db.transaction(storeNames, "readwrite");
     
     return new Promise((resolve, reject) => {
@@ -342,3 +390,17 @@ class DatabaseService {
 }
 
 export const db = new DatabaseService();
+const countries = [
+  { code: 'US', name: 'United States', currency: 'USD' },
+  { code: 'CA', name: 'Canada', currency: 'CAD' },
+  { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
+  { code: 'AU', name: 'Australia', currency: 'AUD' },
+  { code: 'DE', name: 'Germany', currency: 'EUR' },
+  { code: 'FR', name: 'France', currency: 'EUR' },
+  { code: 'JP', name: 'Japan', currency: 'JPY' },
+  { code: 'IN', name: 'India', currency: 'INR' },
+  { code: 'BR', name: 'Brazil', currency: 'BRL' },
+  { code: 'ZA', name: 'South Africa', currency: 'ZAR' },
+];
+
+    

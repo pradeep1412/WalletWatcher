@@ -23,6 +23,7 @@ import {
 } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useTheme } from "next-themes";
+import { runPriceScheduler } from "@/lib/price-scheduler";
 
 type WalletWatcherContextType = AppState & {
   filteredTransactions: Transaction[];
@@ -66,6 +67,10 @@ export function WalletWatcherProvider({ children }: { children: ReactNode }) {
         return;
       }
       setNextTheme(user.theme || 'light');
+      
+      // Run the price scheduler
+      await runPriceScheduler();
+      
       const [transactions, categories, budgets, savingsGoals] = await Promise.all([
         db.getTransactions(),
         db.getCategories(),
@@ -345,3 +350,5 @@ export function useWalletWatcher() {
   }
   return context;
 }
+
+    
