@@ -26,7 +26,7 @@ function AssetCardSkeleton() {
     )
 }
 
-// Helper to parse price string like "₹1,234.56" into a number
+// Helper to parse price string like "₹1,234.56" or "24,741" into a number
 const parsePrice = (priceString: string): number => {
     if (typeof priceString !== 'string') return NaN;
     return parseFloat(priceString.replace(/[₹,]/g, ''));
@@ -48,10 +48,10 @@ export default function MetalsPage() {
         }
         const data = await response.json();
         
-        // Mocking change, changePercent, and history for the new card UI
         const goldPrice = parsePrice(data.gold["24k"]);
         const silverPrice = parsePrice(data.silver.price);
         const platinumPrice = parsePrice(data.platinum.price);
+        const niftyPrice = parsePrice(data.nifty);
 
         const generateMockHistory = (basePrice: number) => {
           if (isNaN(basePrice)) return [];
@@ -70,6 +70,14 @@ export default function MetalsPage() {
         }
 
         const newAssets: Asset[] = [
+           { 
+            symbol: "NIFTY",
+            name: "Nifty 50", 
+            price: niftyPrice,
+            unit: "points",
+            icon: TrendingUp, 
+            ...mockAssetData(niftyPrice) 
+          },
           { 
             symbol: "GOLD",
             name: "Gold (24k)", 
@@ -110,14 +118,15 @@ export default function MetalsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Live Metal Prices</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Live Market Data</h1>
         <p className="text-muted-foreground">
-            Stay updated with the latest prices of precious metals.
+            Stay updated with the latest prices of precious metals and market indices.
         </p>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <AssetCardSkeleton />
             <AssetCardSkeleton />
             <AssetCardSkeleton />
             <AssetCardSkeleton />
@@ -129,7 +138,7 @@ export default function MetalsPage() {
             <p className="mt-2 text-muted-foreground">{error}</p>
         </Card>
       ) : assets.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {assets.map(asset => <AssetCard key={asset.symbol} asset={asset} />)}
         </div>
       ) : null}

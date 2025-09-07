@@ -30,8 +30,15 @@ export function AssetCard({ asset }: AssetCardProps) {
       if (isNaN(price)) return "";
       
       const isNifty = asset.symbol === "NIFTY";
-      const formatOptions: Intl.NumberFormatOptions = {
-          style: isNifty ? "decimal" : "currency",
+      const formatOptions: Intl.NumberFormatOptions = isNifty 
+        ? {
+          style: "decimal",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+          ...options
+        }
+        : {
+          style: "currency",
           currency: "INR",
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
