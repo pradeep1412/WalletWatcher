@@ -63,6 +63,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           <nav className="hidden items-center gap-4 md:flex">
              <NavLink href="/dashboard">Dashboard</NavLink>
              <NavLink href="/dashboard/transactions">Transactions</NavLink>
+             <NavLink href="/dashboard/metals">Metals</NavLink>
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -95,6 +96,11 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                   <DropdownMenuItem asChild>
                      <Link href="/dashboard/transactions" className="w-full">
                       Transactions
+                    </Link>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem asChild>
+                     <Link href="/dashboard/metals" className="w-full">
+                      Metals
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
