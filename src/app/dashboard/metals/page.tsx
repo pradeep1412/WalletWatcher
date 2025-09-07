@@ -50,7 +50,8 @@ export default function MetalsPage() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("https://gold-silver-api.vercel.app/api/all");
+        // Fetch from the internal API route
+        const response = await fetch("/api/metals");
         if (!response.ok) {
           throw new Error("Failed to fetch metal prices. Please try again later.");
         }
