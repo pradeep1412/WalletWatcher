@@ -1,7 +1,12 @@
+
+import type { LucideIcon } from "lucide-react";
+import { type SVGProps } from "react";
+
 export interface User {
   id: number;
   username: string;
   country: string;
+  currency: string;
   theme?: 'light' | 'dark';
 }
 
@@ -60,4 +65,15 @@ export interface QrData {
     type: 'WalletWatcherReport';
     version: number;
     data: QrTransaction[];
+}
+
+export interface Asset {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  unit: string;
+  history: number[];
+  icon: LucideIcon | ((props: SVGProps<SVGSVGElement>) => JSX.Element);
 }

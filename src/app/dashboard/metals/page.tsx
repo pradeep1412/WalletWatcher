@@ -3,45 +3,37 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, TrendingUp, AlertTriangle } from "lucide-react";
+import { Loader2, TrendingUp, AlertTriangle, Atom, Gem, Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Asset } from "@/lib/types";
+import { AssetCard } from "@/components/dashboard/asset-card";
 
-interface MetalPrices {
-  currency: string;
-  gold: {
-    "18k": string;
-    "22k": string;
-    "24k": string;
-    unit: string;
-  };
-  platinum: {
-    price: string;
-    unit: string;
-  };
-  silver: {
-    price: string;
-    unit: string;
-  };
-}
-
-function PriceCardSkeleton() {
+function AssetCardSkeleton() {
     return (
-        <Card>
-            <CardHeader>
+        <Card className="flex flex-col h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-6 w-6 rounded-full" />
             </CardHeader>
-            <CardContent className="space-y-2">
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-full" />
+            <CardContent className="flex flex-col flex-grow">
+                <Skeleton className="h-8 w-32 mt-2" />
+                <Skeleton className="h-4 w-40 mt-2" />
+                <div className="flex-grow mt-4 h-24">
+                  <Skeleton className="h-full w-full" />
+                </div>
             </CardContent>
         </Card>
     )
 }
 
+// Helper to parse price string like "₹1,234.56" into a number
+const parsePrice = (priceString: string): number => {
+    if (typeof priceString !== 'string') return NaN;
+    return parseFloat(priceString.replace(/[₹,]/g, ''));
+}
+
 export default function MetalsPage() {
-  const [prices, setPrices] = useState<MetalPrices | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,13 +42,62 @@ export default function MetalsPage() {
       try {
         setLoading(true);
         setError(null);
-        // Fetch from the internal API route
         const response = await fetch("/api/metals");
         if (!response.ok) {
           throw new Error("Failed to fetch metal prices. Please try again later.");
         }
         const data = await response.json();
-        setPrices(data);
+        
+        // Mocking change, changePercent, and history for the new card UI
+        const goldPrice = parsePrice(data.gold["24k"]);
+        const silverPrice = parsePrice(data.silver.price);
+        const platinumPrice = parsePrice(data.platinum.price);
+
+        const generateMockHistory = (basePrice: number) => {
+          if (isNaN(basePrice)) return [];
+          const history = [];
+          for (let i = 0; i < 15; i++) {
+            history.push(basePrice * (1 + (Math.random() - 0.5) * 0.05));
+          }
+          return history;
+        }
+
+        const mockAssetData = (price: number) => {
+          if (isNaN(price)) return { change: 0, changePercent: 0, history: []};
+          const change = price * (Math.random() - 0.5) * 0.02;
+          const changePercent = (change / price) * 100;
+          return { change, changePercent, history: generateMockHistory(price) };
+        }
+
+        const newAssets: Asset[] = [
+          { 
+            symbol: "GOLD",
+            name: "Gold (24k)", 
+            price: goldPrice,
+            unit: data.gold.unit,
+            icon: Award, 
+            ...mockAssetData(goldPrice) 
+          },
+          { 
+            symbol: "SILVER",
+            name: "Silver", 
+            price: silverPrice,
+            unit: data.silver.unit, 
+            icon: Gem, 
+            ...mockAssetData(silverPrice) 
+          },
+          { 
+            symbol: "PLATINUM",
+            name: "Platinum", 
+            price: platinumPrice,
+            unit: data.platinum.unit, 
+            icon: Atom, 
+            ...mockAssetData(platinumPrice)
+          },
+        ];
+
+        setAssets(newAssets);
+
       } catch (err) {
         setError(err instanceof Error ? err.message : "An unknown error occurred.");
       } finally {
@@ -72,15 +113,14 @@ export default function MetalsPage() {
         <h1 className="text-3xl font-bold tracking-tight">Live Metal Prices</h1>
         <p className="text-muted-foreground">
             Stay updated with the latest prices of precious metals.
-            {prices?.currency && ` (Prices in ${prices.currency})`}
         </p>
       </div>
 
       {loading ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <PriceCardSkeleton />
-            <PriceCardSkeleton />
-            <PriceCardSkeleton />
+            <AssetCardSkeleton />
+            <AssetCardSkeleton />
+            <AssetCardSkeleton />
         </div>
       ) : error ? (
         <Card className="flex flex-col items-center justify-center p-8 text-center">
@@ -88,52 +128,9 @@ export default function MetalsPage() {
             <h2 className="mt-4 text-xl font-semibold">Could not fetch prices</h2>
             <p className="mt-2 text-muted-foreground">{error}</p>
         </Card>
-      ) : prices ? (
+      ) : assets.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Gold</CardTitle>
-                    <CardDescription>Price per {prices.gold.unit}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                   <div className="flex justify-between">
-                       <span className="text-muted-foreground">24k</span>
-                       <span className="font-semibold">{prices.gold["24k"]}</span>
-                   </div>
-                   <div className="flex justify-between">
-                       <span className="text-muted-foreground">22k</span>
-                       <span className="font-semibold">{prices.gold["22k"]}</span>
-                   </div>
-                   <div className="flex justify-between">
-                       <span className="text-muted-foreground">18k</span>
-                       <span className="font-semibold">{prices.gold["18k"]}</span>
-                   </div>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Silver</CardTitle>
-                    <CardDescription>Price per {prices.silver.unit}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                   <div className="flex justify-between">
-                       <span className="text-muted-foreground">Price</span>
-                       <span className="text-3xl font-bold">{prices.silver.price}</span>
-                   </div>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Platinum</CardTitle>
-                    <CardDescription>Price per {prices.platinum.unit}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    <div className="flex justify-between">
-                       <span className="text-muted-foreground">Price</span>
-                       <span className="text-3xl font-bold">{prices.platinum.price}</span>
-                   </div>
-                </CardContent>
-            </Card>
+            {assets.map(asset => <AssetCard key={asset.symbol} asset={asset} />)}
         </div>
       ) : null}
     </div>
